@@ -1,0 +1,314 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Root tokens.
+   Sane defaults so the page never flashes unstyled before the
+   ThemeProvider runs. The provider overwrites all of them at runtime.
+   --------------------------------------------------------------------------- */
+@layer base {
+  :root {
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+    --card: 224 50% 8%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 60% 6%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 215 28% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 223 47% 11%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 263 80% 70%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 216 34% 20%;
+    --glow: 217 91% 60%;
+
+    --radius: 16px;
+    --blur: 24px;
+    --glow-size: 24px;
+    --glow-opacity: 0.28;
+
+    --gradient-mesh: radial-gradient(
+        at 18% 22%,
+        hsl(var(--primary) / 0.28) 0px,
+        transparent 55%
+      ),
+      radial-gradient(at 82% 8%, hsl(var(--accent) / 0.25) 0px, transparent 55%),
+      radial-gradient(
+        at 50% 92%,
+        hsl(var(--secondary) / 0.22) 0px,
+        transparent 55%
+      );
+    --gradient-primary: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--accent)) 100%
+    );
+    --gradient-aurora: conic-gradient(
+      from 200deg at 50% 50%,
+      hsl(var(--primary) / 0.55),
+      hsl(var(--secondary) / 0.4),
+      hsl(var(--accent) / 0.55),
+      hsl(var(--primary) / 0.55)
+    );
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body {
+    @apply min-h-full;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+    background-attachment: fixed;
+    background-image:
+      radial-gradient(
+        ellipse 80% 60% at 50% -10%,
+        hsl(var(--primary) / 0.12),
+        transparent 60%
+      ),
+      radial-gradient(
+        ellipse 60% 40% at 100% 100%,
+        hsl(var(--accent) / 0.1),
+        transparent 60%
+      );
+    color-scheme: dark;
+  }
+
+  html.light body {
+    color-scheme: light;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.35);
+    color: hsl(var(--foreground));
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--primary) / 0.6),
+      hsl(var(--accent) / 0.5)
+    );
+    border-radius: 999px;
+    border: 2px solid hsl(var(--background));
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--primary) / 0.9),
+      hsl(var(--accent) / 0.8)
+    );
+  }
+
+  /* Brief cross-fade for theme swaps. */
+  html.theme-transition,
+  html.theme-transition body,
+  html.theme-transition *:not(svg):not(.no-theme-transition) {
+    transition:
+      background-color 500ms ease,
+      color 500ms ease,
+      border-color 500ms ease,
+      box-shadow 500ms ease,
+      fill 500ms ease,
+      stroke 500ms ease,
+      backdrop-filter 500ms ease;
+  }
+
+  body.motion-disabled *,
+  body.motion-disabled *::before,
+  body.motion-disabled *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Reusable composite utilities
+   --------------------------------------------------------------------------- */
+@layer components {
+  .glass {
+    background-color: hsl(var(--card) / 0.55);
+    backdrop-filter: blur(var(--blur)) saturate(160%);
+    -webkit-backdrop-filter: blur(var(--blur)) saturate(160%);
+    border: 1px solid hsl(var(--border) / 0.6);
+    box-shadow:
+      inset 0 1px 0 hsl(var(--foreground) / 0.06),
+      0 20px 60px -30px hsl(var(--primary) / 0.45);
+  }
+
+  body:not(.glass-enabled) .glass {
+    background-color: hsl(var(--card));
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+
+  .glass-strong {
+    background-color: hsl(var(--card) / 0.72);
+    backdrop-filter: blur(calc(var(--blur) * 1.3)) saturate(180%);
+    -webkit-backdrop-filter: blur(calc(var(--blur) * 1.3)) saturate(180%);
+    border: 1px solid hsl(var(--border) / 0.75);
+  }
+
+  .glass-soft {
+    background-color: hsl(var(--card) / 0.35);
+    backdrop-filter: blur(calc(var(--blur) * 0.6)) saturate(140%);
+    -webkit-backdrop-filter: blur(calc(var(--blur) * 0.6)) saturate(140%);
+    border: 1px solid hsl(var(--border) / 0.4);
+  }
+
+  .mesh-bg {
+    background-image: var(--gradient-mesh);
+  }
+
+  .aurora-bg {
+    background-image: var(--gradient-aurora);
+  }
+
+  .primary-gradient {
+    background-image: var(--gradient-primary);
+  }
+
+  .text-gradient {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .border-gradient {
+    position: relative;
+    isolation: isolate;
+  }
+  .border-gradient::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    padding: 1px;
+    border-radius: inherit;
+    background: var(--gradient-primary);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .glow-ring {
+    box-shadow:
+      0 0 0 1px hsl(var(--primary) / 0.4),
+      0 0 var(--glow-size) hsl(var(--glow) / var(--glow-opacity));
+  }
+
+  .hover-glow {
+    transition:
+      box-shadow 350ms ease,
+      transform 350ms ease,
+      border-color 350ms ease;
+  }
+  .hover-glow:hover {
+    box-shadow: 0 0 calc(var(--glow-size) * 1.2)
+      hsl(var(--glow) / calc(var(--glow-opacity) + 0.15));
+    transform: translateY(-2px);
+  }
+
+  .grid-pattern {
+    background-image:
+      linear-gradient(
+        to right,
+        hsl(var(--border) / 0.4) 1px,
+        transparent 1px
+      ),
+      linear-gradient(
+        to bottom,
+        hsl(var(--border) / 0.4) 1px,
+        transparent 1px
+      );
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(
+      ellipse at center,
+      black 30%,
+      transparent 75%
+    );
+  }
+
+  .dot-pattern {
+    background-image: radial-gradient(
+      hsl(var(--foreground) / 0.12) 1px,
+      transparent 1px
+    );
+    background-size: 22px 22px;
+    mask-image: radial-gradient(ellipse at center, black 35%, transparent 80%);
+    -webkit-mask-image: radial-gradient(
+      ellipse at center,
+      black 35%,
+      transparent 80%
+    );
+  }
+
+  .noise-overlay {
+    position: relative;
+    isolation: isolate;
+  }
+  .noise-overlay::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.04;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/></svg>");
+    z-index: 0;
+  }
+
+  .shimmer-text {
+    background: linear-gradient(
+      110deg,
+      hsl(var(--foreground)) 30%,
+      hsl(var(--primary)) 45%,
+      hsl(var(--accent)) 55%,
+      hsl(var(--foreground)) 70%
+    );
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: shimmer 4s linear infinite;
+  }
+
+  /* CRM-specific helper: pill that draws attention to a deal stage / lead
+     status without going full StatusPill — useful inside dense tables. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+}
