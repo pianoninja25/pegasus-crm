@@ -395,4 +395,4 @@ export const themePresetMap = themePresets.reduce<Record<string, ThemePreset>>(
   {},
 );
 
-export const DEFAULT_THEME_ID = "midnight-glass";
+export const DEFAULT_THEME_ID = "sunset-gradient";

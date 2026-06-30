@@ -64,6 +64,20 @@ export const useThemeStore = create<ThemeStore>()(
     }),
     {
       name: "pegasus-crm-theme",
+      /**
+       * v1 — default preset switched from "midnight-glass" to
+       * "sunset-gradient". Anyone whose persisted preset still matches the
+       * old default is rolled forward; users who explicitly picked another
+       * preset (including midnight-glass post-v1) are left alone.
+       */
+      version: 1,
+      migrate: (persisted, version) => {
+        const state = persisted as Partial<ThemeStoreState> | undefined;
+        if (version < 1 && state?.presetId === "midnight-glass") {
+          return { ...state, presetId: DEFAULT_THEME_ID } as ThemeStoreState;
+        }
+        return state as ThemeStoreState;
+      },
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         presetId: state.presetId,
