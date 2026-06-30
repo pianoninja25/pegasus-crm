@@ -12,24 +12,25 @@ import {
 import { useRouter } from "next/navigation";
 import {
   Bell,
-  Briefcase,
-  Building2,
   CalendarClock,
+  ClipboardCheck,
   Compass,
-  CreditCard,
+  FileText,
+  HandCoins,
+  HardHat,
   Home,
-  Inbox,
-  KanbanSquare,
   LayoutDashboard,
-  ListChecks,
   LogIn,
   Palette,
   PieChart,
   Plus,
+  Receipt,
   RefreshCcw,
+  ScrollText,
+  Settings,
   Sparkles,
-  Target,
   Users,
+  Wrench,
 } from "lucide-react";
 
 import {
@@ -67,7 +68,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
-      <CommandInput placeholder="Search contacts, deals, pages and actions…" />
+      <CommandInput placeholder="Search customers, quotations, visits, pages…" />
       <CommandList>
         <CommandEmpty>Nothing matches. Try another keyword.</CommandEmpty>
 
@@ -91,77 +92,126 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
 
         <CommandSeparator />
 
-        <CommandGroup heading="Workspace">
+        <CommandGroup heading="Operations">
           <CommandItem
-            value="pipeline kanban board stages"
-            onSelect={() => go("/dashboard/pipeline")}
-          >
-            <KanbanSquare />
-            Pipeline (kanban)
-            <CommandShortcut>G P</CommandShortcut>
-          </CommandItem>
-          <CommandItem
-            value="contacts people"
-            onSelect={() => go("/dashboard/contacts")}
+            value="customers clients companies people"
+            onSelect={() => go("/dashboard/customers")}
           >
             <Users />
-            Contacts
+            Customers
             <CommandShortcut>G C</CommandShortcut>
           </CommandItem>
           <CommandItem
-            value="companies accounts organizations"
-            onSelect={() => go("/dashboard/companies")}
+            value="quotations quote pricing"
+            onSelect={() => go("/dashboard/quotations")}
           >
-            <Building2 />
-            Companies
-            <CommandShortcut>G O</CommandShortcut>
+            <FileText />
+            Quotations
+            <CommandShortcut>G Q</CommandShortcut>
           </CommandItem>
           <CommandItem
-            value="deals opportunities revenue"
-            onSelect={() => go("/dashboard/deals")}
+            value="contracts service contracts"
+            onSelect={() => go("/dashboard/contracts")}
           >
-            <Briefcase />
-            Deals
-            <CommandShortcut>G $</CommandShortcut>
+            <ScrollText />
+            Service Contracts
+            <CommandShortcut>G S</CommandShortcut>
           </CommandItem>
           <CommandItem
-            value="leads prospects new"
-            onSelect={() => go("/dashboard/leads")}
+            value="visits work orders service jobs"
+            onSelect={() => go("/dashboard/work-orders")}
           >
-            <Target />
-            Leads
+            <Wrench />
+            Work Orders
+            <CommandShortcut>G V</CommandShortcut>
           </CommandItem>
           <CommandItem
-            value="activities tasks calls emails"
-            onSelect={() => go("/dashboard/activities")}
+            value="engineers technicians team field"
+            onSelect={() => go("/dashboard/engineers")}
           >
-            <ListChecks />
-            Activities
-            <CommandShortcut>G A</CommandShortcut>
+            <HardHat />
+            Engineers
+            <CommandShortcut>G E</CommandShortcut>
           </CommandItem>
           <CommandItem
-            value="inbox conversations messages email threads"
-            onSelect={() => go("/dashboard/inbox")}
-          >
-            <Inbox />
-            Inbox
-            <CommandShortcut>G I</CommandShortcut>
-          </CommandItem>
-          <CommandItem
-            value="calendar schedule meetings"
-            onSelect={() => go("/dashboard/calendar")}
+            value="scheduling calendar upcoming"
+            onSelect={() => go("/dashboard/scheduling")}
           >
             <CalendarClock />
-            Calendar
+            Scheduling
           </CommandItem>
           <CommandItem
-            value="reports analytics dashboards charts"
+            value="my tasks jobs engineer assigned work orders"
+            onSelect={() => go("/dashboard/my-tasks")}
+          >
+            <ClipboardCheck />
+            My tasks
+          </CommandItem>
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        <CommandGroup heading="Finance">
+          <CommandItem
+            value="invoices billing payments receivables"
+            onSelect={() => go("/dashboard/finance/invoices")}
+          >
+            <Receipt />
+            Invoices
+          </CommandItem>
+          <CommandItem
+            value="expenses spend fuel salaries spare parts costs"
+            onSelect={() => go("/dashboard/finance/expenses")}
+          >
+            <HandCoins />
+            Expenses
+          </CommandItem>
+          <CommandItem
+            value="reports analytics charts dashboards profit loss income"
             onSelect={() => go("/dashboard/reports")}
           >
             <PieChart />
             Reports
             <CommandShortcut>G R</CommandShortcut>
           </CommandItem>
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        <CommandGroup heading="Create">
+          <CommandItem
+            value="new quotation create"
+            onSelect={() => go("/dashboard/quotations/new")}
+          >
+            <Plus />
+            New quotation
+          </CommandItem>
+          <CommandItem
+            value="new customer create"
+            onSelect={() => go("/dashboard/customers/new")}
+          >
+            <Plus />
+            New customer
+          </CommandItem>
+          <CommandItem
+            value="new contract create"
+            onSelect={() => go("/dashboard/contracts/new")}
+          >
+            <Plus />
+            New service contract
+          </CommandItem>
+          <CommandItem
+            value="new work order create"
+            onSelect={() => go("/dashboard/work-orders/new")}
+          >
+            <Plus />
+            New work order
+          </CommandItem>
+        </CommandGroup>
+
+        <CommandSeparator />
+
+        <CommandGroup heading="Account">
           <CommandItem
             value="notifications bell"
             onSelect={() => go("/dashboard/notifications")}
@@ -170,44 +220,11 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             Notifications
           </CommandItem>
           <CommandItem
-            value="settings members billing"
+            value="settings preferences"
             onSelect={() => go("/dashboard/settings")}
           >
-            <CreditCard />
+            <Settings />
             Settings
-          </CommandItem>
-        </CommandGroup>
-
-        <CommandSeparator />
-
-        <CommandGroup heading="Create">
-          <CommandItem
-            value="new deal create opportunity"
-            onSelect={() => go("/dashboard/deals?new=1")}
-          >
-            <Plus />
-            New deal
-          </CommandItem>
-          <CommandItem
-            value="new contact person"
-            onSelect={() => go("/dashboard/contacts?new=1")}
-          >
-            <Plus />
-            New contact
-          </CommandItem>
-          <CommandItem
-            value="new company account organization"
-            onSelect={() => go("/dashboard/companies?new=1")}
-          >
-            <Plus />
-            New company
-          </CommandItem>
-          <CommandItem
-            value="new activity task"
-            onSelect={() => go("/dashboard/activities?new=1")}
-          >
-            <Plus />
-            Log an activity
           </CommandItem>
         </CommandGroup>
 
@@ -270,9 +287,6 @@ const CommandPaletteContext = createContext<CommandPaletteContextValue | null>(
   null,
 );
 
-/** Wrap the dashboard shell in this provider so any child can pop the
- * palette via {@link useCommandPalette}. Also binds the global ⌘K / Ctrl+K
- * hotkey. */
 export function CommandPaletteProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
 

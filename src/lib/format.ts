@@ -56,6 +56,31 @@ export function isOverdue(iso: string | Date): boolean {
   return target.getTime() < Date.now();
 }
 
+/**
+ * Same pluggable-resolver pattern as {@link resolveActiveCurrency}: we read
+ * the live store value on every format call so date strings track the
+ * user's locale immediately, even mid-render.
+ */
+let resolveActiveLocale: () => string | undefined = () => undefined;
+
+export function setActiveFormatLocaleResolver(
+  resolver: () => string | undefined,
+): void {
+  resolveActiveLocale = resolver;
+}
+
+/**
+ * @deprecated Prefer {@link setActiveFormatLocaleResolver} so format.ts
+ * stays reactive to store changes.
+ */
+export function setActiveFormatLocale(loc: string | undefined): void {
+  resolveActiveLocale = () => loc;
+}
+
+export function getActiveFormatLocale(): string | undefined {
+  return resolveActiveLocale();
+}
+
 /** Locale-aware absolute time for tooltips and audit rows. */
 export function formatDateTime(
   iso: string | Date,
@@ -63,7 +88,7 @@ export function formatDateTime(
 ): string {
   const { withYear = false, withSeconds = false } = opts;
   const target = typeof iso === "string" ? new Date(iso) : iso;
-  return target.toLocaleString(undefined, {
+  return target.toLocaleString(resolveActiveLocale(), {
     month: "short",
     day: "numeric",
     year: withYear ? "numeric" : undefined,
@@ -79,7 +104,7 @@ export function formatDate(
   opts: { withYear?: boolean } = {},
 ): string {
   const target = typeof iso === "string" ? new Date(iso) : iso;
-  return target.toLocaleDateString(undefined, {
+  return target.toLocaleDateString(resolveActiveLocale(), {
     month: "short",
     day: "numeric",
     year: opts.withYear ? "numeric" : undefined,
@@ -87,20 +112,77 @@ export function formatDate(
 }
 
 /**
- * Compact currency formatting for deal values: $42K / $1.2M / $128 etc.
- * Default currency USD; pass an ISO-4217 code to override.
+ * Just the hour + minute of an instant, locale-aware. Useful when the
+ * surrounding row already conveys the calendar date (e.g. the "Today"
+ * card on `/dashboard/my-tasks`).
  */
+export function formatTime(iso: string | Date): string {
+  const target = typeof iso === "string" ? new Date(iso) : iso;
+  return target.toLocaleTimeString(resolveActiveLocale(), {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+/**
+ * Compact currency formatting for service values: $42K / Rp 680M / S$56K etc.
+ *
+ * Seed amounts are authored in USD. We multiply by a per-currency rate so
+ * switching the workspace currency reframes every monetary value without
+ * having to re-seed the database. If a caller passes an explicit `currency`,
+ * it overrides the active one — useful for tests and exports.
+ */
+const CURRENCY_RATES: Record<string, { rate: number; intl: string }> = {
+  USD: { rate: 1, intl: "en-US" },
+  IDR: { rate: 16_200, intl: "id-ID" },
+  SGD: { rate: 1.34, intl: "en-SG" },
+  MYR: { rate: 4.7, intl: "ms-MY" },
+};
+
+/**
+ * Pluggable resolver for "what currency should I render in right now?".
+ * Wired up to the Zustand locale store by {@link LocaleSync} during module
+ * init so {@link formatCurrency} always sees the user's live selection —
+ * not a stale `useEffect`-plumbed snapshot.
+ *
+ * Kept as a function (not a value) so we read the latest store state on
+ * every call rather than capturing it at module load.
+ */
+let resolveActiveCurrency: () => string = () => "USD";
+
+export function setActiveFormatCurrencyResolver(
+  resolver: () => string,
+): void {
+  resolveActiveCurrency = resolver;
+}
+
+/**
+ * @deprecated Prefer {@link setActiveFormatCurrencyResolver} so format.ts
+ * stays reactive to store changes. Retained for callers that just want to
+ * pin a one-shot fallback (tests, exports).
+ */
+export function setActiveFormatCurrency(code: string): void {
+  resolveActiveCurrency = () => code;
+}
+
+export function getActiveFormatCurrency(): string {
+  return resolveActiveCurrency();
+}
+
 export function formatCurrency(
   amount: number,
   opts: { currency?: string; compact?: boolean } = {},
 ): string {
-  const { currency = "USD", compact = true } = opts;
-  return new Intl.NumberFormat(undefined, {
+  const code = opts.currency ?? resolveActiveCurrency();
+  const compact = opts.compact ?? true;
+  const meta = CURRENCY_RATES[code] ?? CURRENCY_RATES.USD;
+  const converted = amount * meta.rate;
+  return new Intl.NumberFormat(meta.intl, {
     style: "currency",
-    currency,
+    currency: code,
     notation: compact ? "compact" : "standard",
-    maximumFractionDigits: 1,
-  }).format(amount);
+    maximumFractionDigits: compact ? 1 : code === "IDR" ? 0 : 2,
+  }).format(converted);
 }
 
 /** Plain compact number ("1.2K", "42M"). */
@@ -122,4 +204,22 @@ export const compactNumber = (value: number) => formatNumber(value, { compact: t
 /** Percentage formatter — accepts 0..1 fraction. */
 export function formatPercent(fraction: number, digits = 0): string {
   return `${(fraction * 100).toFixed(digits)}%`;
+}
+
+/**
+ * Inline style for engineer avatars — keeps the same coloured-disc look
+ * everywhere (sidebar, lists, detail header rails, schedule rows).
+ *
+ * Hue is stored on each engineer in the seed; missing values fall back
+ * to the brand blue. Saturation/lightness are intentionally fixed so
+ * the avatars stay readable against both light and dark themes.
+ */
+export function engineerAvatarStyle(hue: number | undefined): {
+  background: string;
+  color: string;
+} {
+  return {
+    background: `hsl(${hue ?? 215} 70% 35%)`,
+    color: "white",
+  };
 }

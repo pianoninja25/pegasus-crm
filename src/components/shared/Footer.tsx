@@ -37,9 +37,10 @@ export function Footer() {
             <FooterSection
               title="Product"
               links={[
-                { label: "Pipeline", href: "/dashboard/pipeline" },
-                { label: "Deals", href: "/dashboard/deals" },
-                { label: "Contacts", href: "/dashboard/contacts" },
+                { label: "Customers", href: "/dashboard/customers" },
+                { label: "Quotations", href: "/dashboard/quotations" },
+                { label: "Service contracts", href: "/dashboard/contracts" },
+                { label: "Scheduling", href: "/dashboard/scheduling" },
                 { label: "Reports", href: "/dashboard/reports" },
               ]}
             />

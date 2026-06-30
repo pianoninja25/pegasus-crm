@@ -4,15 +4,19 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
-  Briefcase,
-  Building2,
+  CalendarClock,
   CheckCircle2,
-  Inbox,
-  KanbanSquare,
-  PieChart,
+  ClipboardCheck,
+  FileText,
+  HardHat,
+  Map,
+  Receipt,
+  ScrollText,
+  Snowflake,
   Sparkles,
-  Target,
   Users,
+  Wallet,
+  Wrench,
 } from "lucide-react";
 
 import { AuroraBackground } from "@/components/shared/AuroraBackground";
@@ -28,43 +32,58 @@ import { siteConfig } from "@/config/site";
 const features = [
   {
     icon: Users,
-    title: "Contacts you actually trust",
-    body: "Single record per person, merged by signal — emails replied, calls answered, deals influenced.",
+    title: "Customers with every detail",
+    body: "Profile, every AC unit, contracts, quotations, outstanding invoices and a full interaction timeline — all in one place.",
   },
   {
-    icon: Building2,
-    title: "Accounts with shape",
-    body: "Companies show the people who matter, the open deals, and the last time anyone touched them.",
+    icon: ScrollText,
+    title: "Service contracts that schedule themselves",
+    body: "Pick a frequency, assign an engineer. Pegasus generates every recurring visit — monthly, quarterly, annual or custom.",
   },
   {
-    icon: KanbanSquare,
-    title: "A pipeline that doesn't lie",
-    body: "Drag deals across stages. Velocity, win-rate and expected revenue update the moment you do.",
+    icon: CalendarClock,
+    title: "Scheduling that nobody misses",
+    body: "Calendar, route, reminders and overdue alerts. The team sees today's jobs the moment they log in.",
   },
   {
-    icon: Inbox,
-    title: "Inbox that thinks like a rep",
-    body: "Replies stitched to the right deal. Stars, snoozes and quick replies — without leaving the CRM.",
+    icon: ClipboardCheck,
+    title: "Mandatory checklists",
+    body: "Every visit closes with a 10-point checklist, before/after photos and customer signature. No exceptions.",
   },
   {
-    icon: Target,
-    title: "Leads, scored honestly",
-    body: "Predictive score on every new lead based on source, fit and engagement velocity.",
+    icon: FileText,
+    title: "Quotations to work orders",
+    body: "Draft, send, approve. Convert approved quotations directly into service contracts, work orders or invoices.",
   },
   {
-    icon: PieChart,
-    title: "Reports that pre-fill",
-    body: "Pipeline by stage, win-rate by owner, ageing deals — all rendered in seconds, none of it manual.",
+    icon: Wallet,
+    title: "Finance, live",
+    body: "Income, expenses, paid + outstanding invoices, daily / weekly / monthly / yearly summaries — and a clean P&L.",
+  },
+  {
+    icon: HardHat,
+    title: "Engineer performance",
+    body: "Jobs completed, service hours, revenue generated, customer ratings — leaderboard plus per-engineer activity timeline.",
+  },
+  {
+    icon: Map,
+    title: "Maps + nearby search",
+    body: "Every customer on an interactive map. Route plan today's stops, surface nearby candidates and never drive empty.",
+  },
+  {
+    icon: Receipt,
+    title: "Reports for management",
+    body: "Sales by period, engineer leaderboards, top customers, most-replaced spare parts, contract health, P&L.",
   },
 ];
 
 const proof = [
-  "Multi-currency revenue",
-  "Real-time pipeline",
-  "Custom fields, no migration tax",
-  "Ambient AI assistant",
-  "Workspace-native theming",
-  "Keyboard-first navigation",
+  "Multi-role access (Admin · Manager · Staff · Engineer)",
+  "Recurring maintenance never missed",
+  "Quotation → work-order → invoice in one click",
+  "Engineer mobile-ready job view",
+  "Customer interaction timeline",
+  "Real-time KPIs + drill-down reports",
 ];
 
 export default function HomePage() {
@@ -86,23 +105,24 @@ export default function HomePage() {
             >
               <Badge variant="outline" className="mx-auto gap-1.5 border-border/70 bg-card/60 px-3 py-1 text-[11px] backdrop-blur">
                 <Sparkles className="h-3 w-3 text-primary" />
-                Same opinionated UX as Pegasus Orchestrator
+                Built for HVAC operators · same opinionated UX as Pegasus
               </Badge>
               <h1 className="mt-6 font-display text-5xl font-semibold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
                 The{" "}
                 <span className="bg-[image:var(--gradient-primary)] bg-clip-text text-transparent">
-                  Relationship Engine
+                  AC Service OS
                 </span>{" "}
-                for modern sales teams.
+                that runs your whole field business.
               </h1>
               <p className="mx-auto mt-6 max-w-2xl text-base text-muted-foreground sm:text-lg">
-                {siteConfig.description.split(".")[0]}. Glassy. Themeable. Built
-                so your team treats the CRM like a Linear board, not a punishment.
+                Customers, AC units, service contracts, quotations, recurring
+                schedules, engineer activity, finance and reports — all in one
+                glassy dashboard. Demo runs on deterministic mock data.
               </p>
               <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Button asChild size="lg" className="gap-2 px-6">
                   <Link href="/dashboard">
-                    Open the demo CRM
+                    Open the dashboard
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
@@ -111,8 +131,8 @@ export default function HomePage() {
                 </Button>
               </div>
               <p className="mt-4 text-xs text-muted-foreground">
-                Fully seeded with a believable book of business. No backend, no
-                signup, no friction.
+                Fully seeded business: 72 customers, 38 contracts, hundreds of
+                recurring visits, live finance. Zero backend, zero signup.
               </p>
             </motion.div>
 
@@ -124,9 +144,9 @@ export default function HomePage() {
         <section className="relative py-24">
           <div className="container">
             <SectionHeader
-              eyebrow="Everything you need, nothing you don't"
-              title="A CRM that disappears into your workflow."
-              description="Built around the deal — the contacts, companies, activities and conversations that move it forward."
+              eyebrow="Every module, wired together"
+              title="One system. Eight modules. Zero leaks."
+              description="Customers, quotations, contracts, scheduling, engineers, checklists, finance and maps — each linking back to the same source of truth."
               align="center"
             />
             <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -171,9 +191,9 @@ export default function HomePage() {
                     Everything below ships in the demo workspace.
                   </h3>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    Open the dashboard and click around — every page is wired to
-                    realistic mock data so you can show your team exactly how it
-                    feels.
+                    Open the dashboard and click through every module — they&rsquo;re
+                    wired to realistic mock data so you can show the team how it
+                    feels before you commit to a real rollout.
                   </p>
                 </div>
                 <ul className="grid gap-2 sm:grid-cols-2">
@@ -202,16 +222,17 @@ export default function HomePage() {
               />
               <div className="relative mx-auto max-w-2xl">
                 <Badge variant="outline" className="mx-auto gap-1.5 border-border/70 bg-card/60 px-3 py-1 text-[11px]">
-                  <Briefcase className="h-3 w-3 text-primary" />
+                  <Wrench className="h-3 w-3 text-primary" />
                   No backend required
                 </Badge>
                 <h2 className="mt-4 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
                   Skip the demo call. Take it for a spin.
                 </h2>
                 <p className="mt-4 text-sm text-muted-foreground sm:text-base">
-                  The dashboard is fully interactive. Drag deals across stages,
-                  star contacts, switch themes — all driven by deterministic mock
-                  data so the demo behaves the same on every reload.
+                  The dashboard is fully interactive. Tick checklists, approve
+                  quotations, switch roles, change themes — all driven by
+                  deterministic mock data so the demo behaves the same on every
+                  reload.
                 </p>
                 <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
                   <Button asChild size="lg" className="gap-2 px-6">
@@ -236,95 +257,84 @@ export default function HomePage() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Hero preview — a stylised mock of the dashboard, animated on entrance      */
+/* Hero preview                                                               */
 /* -------------------------------------------------------------------------- */
 
 function HeroPreview() {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 30 }}
+      initial={{ opacity: 0, y: 32 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.7, ease: "easeOut", delay: 0.15 }}
-      className="relative mx-auto mt-14 max-w-5xl"
+      transition={{ duration: 0.7, delay: 0.15, ease: "easeOut" }}
+      className="relative mx-auto mt-16 max-w-5xl"
     >
-      <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-card/60 shadow-glow backdrop-blur">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-50"
-          style={{ background: "var(--gradient-aurora)" }}
-        />
-        <div className="relative grid grid-cols-1 lg:grid-cols-[200px_1fr]">
-          {/* sidebar mock */}
-          <div className="hidden border-r border-border/60 bg-background/40 p-4 lg:block">
-            <div className="mb-4 flex items-center gap-2">
-              <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-[image:var(--gradient-primary)] text-[10px] font-bold text-primary-foreground shadow-glow-sm">
-                P
+      <div className="rounded-3xl border border-border/60 bg-card/70 p-3 shadow-glow backdrop-blur">
+        <div className="rounded-2xl border border-border/60 bg-background/60 px-6 py-6">
+          <div className="flex items-center justify-between border-b border-border/60 pb-3">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary/15 text-primary">
+                <Snowflake className="h-3.5 w-3.5" />
               </span>
-              <span className="text-xs font-semibold tracking-tight">Pegasus</span>
+              <p className="text-xs font-semibold">{siteConfig.name}</p>
             </div>
-            <div className="space-y-1.5">
-              {["Dashboard", "Pipeline", "Inbox", "Contacts", "Companies", "Deals", "Activities"].map((label, i) => (
-                <div
-                  key={label}
-                  className={`flex items-center gap-2 rounded-md px-2 py-1.5 text-[11px] ${
-                    i === 1
-                      ? "bg-primary/15 text-foreground ring-1 ring-inset ring-primary/25"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  <span className="h-1.5 w-1.5 rounded-full bg-current opacity-60" />
-                  {label}
-                </div>
-              ))}
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400 shadow-glow" />
+              All systems operational
             </div>
           </div>
-          {/* kanban mock */}
-          <div className="p-4 sm:p-6">
-            <div className="mb-4 flex items-center gap-2">
-              <KanbanSquare className="h-4 w-4 text-primary" />
-              <span className="text-xs font-semibold">Pipeline · Q3</span>
-              <span className="ml-auto rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-medium text-accent">
-                $2.4M open
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {[
-                { name: "Qualified", count: 12, deals: [{ label: "Atlas Labs", amount: "42k" }, { label: "Stride Group", amount: "28k" }] },
-                { name: "Proposal", count: 8, deals: [{ label: "Helio Capital", amount: "75k" }] },
-                { name: "Negotiation", count: 5, deals: [{ label: "Lattice Bio", amount: "120k" }] },
-                { name: "Won", count: 14, deals: [{ label: "Cinder Health", amount: "180k" }], accent: true },
-              ].map((col) => (
-                <div
-                  key={col.name}
-                  className="rounded-xl border border-border/60 bg-background/40 p-2"
-                >
-                  <div className="mb-2 flex items-center justify-between px-1">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      {col.name}
-                    </span>
-                    <span
-                      className={`rounded-full px-1.5 py-0.5 text-[10px] ${
-                        col.accent ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {col.count}
-                    </span>
-                  </div>
-                  <div className="space-y-1.5">
-                    {col.deals.map((deal) => (
-                      <div
-                        key={deal.label}
-                        className="rounded-lg border border-border/60 bg-card/60 p-2"
-                      >
-                        <p className="truncate text-[11px] font-medium">{deal.label}</p>
-                        <p className="mt-0.5 text-[10px] text-muted-foreground">
-                          ${deal.amount}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {[
+              {
+                label: "Today's sales",
+                value: "$2,840",
+                tone: "text-emerald-300",
+              },
+              {
+                label: "Active contracts",
+                value: "27",
+                tone: "text-primary",
+              },
+              {
+                label: "Visits this week",
+                value: "31",
+                tone: "text-accent-foreground",
+              },
+            ].map((s) => (
+              <div
+                key={s.label}
+                className="rounded-xl border border-border/60 bg-card/40 p-3"
+              >
+                <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                  {s.label}
+                </p>
+                <p className={`mt-1 font-display text-xl font-semibold ${s.tone}`}>
+                  {s.value}
+                </p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {[
+              { title: "Cendana Plaza", subtitle: "Quarterly cleaning · 09:30", color: "#34d399" },
+              { title: "Atlas Hotel", subtitle: "VRF service · 11:00", color: "#fbbf24" },
+              { title: "Mahkota Office", subtitle: "Compressor swap · 14:00", color: "#38bdf8" },
+            ].map((v) => (
+              <div
+                key={v.title}
+                className="flex items-center gap-2 rounded-xl border border-border/60 bg-card/40 p-2.5"
+              >
+                <span
+                  className="inline-flex h-2 w-2 rounded-full"
+                  style={{ backgroundColor: v.color, boxShadow: `0 0 6px ${v.color}` }}
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-semibold">{v.title}</p>
+                  <p className="truncate text-[10px] text-muted-foreground">
+                    {v.subtitle}
+                  </p>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -3,27 +3,28 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 
-import { currentUser, teamMembers, workspace } from "@/features/common/seed";
+import { company, currentUser, users } from "@/features/service/seed";
+import type { UserRole } from "@/features/service/types";
 
 export interface SessionUser {
   id: string;
   name: string;
   email: string;
   title: string;
+  role: UserRole;
 }
 
 export interface SessionWorkspace {
   id: string;
   name: string;
   plan: string;
-  role: string;
 }
 
 interface AuthStore {
   user: SessionUser | null;
   workspace: SessionWorkspace | null;
-  workspaces: SessionWorkspace[];
   hydrated: boolean;
+  signInAs: (userId: string) => void;
   signIn: () => void;
   signOut: () => void;
   setHydrated: (v: boolean) => void;
@@ -34,47 +35,50 @@ const defaultUser: SessionUser = {
   name: currentUser.name,
   email: currentUser.email,
   title: currentUser.title,
+  role: currentUser.role,
 };
 
 const defaultWorkspace: SessionWorkspace = {
-  id: workspace.id,
-  name: workspace.name,
-  plan: workspace.plan,
-  role: teamMembers.find((m) => m.id === currentUser.id)?.role ?? "owner",
-};
-
-const alternateWorkspace: SessionWorkspace = {
-  id: "ws_pegasus_labs",
-  name: "Pegasus Labs",
-  plan: "Scale",
-  role: "admin",
+  id: company.id,
+  name: company.name,
+  plan: company.plan,
 };
 
 export const useAuthStore = create<AuthStore>()(
   persist(
     (set) => ({
-      // Mock session is signed-in by default so /dashboard is reachable
+      // Mock session — signed-in by default so /dashboard is reachable
       // without having to log in every reload.
       user: defaultUser,
       workspace: defaultWorkspace,
-      workspaces: [defaultWorkspace, alternateWorkspace],
       hydrated: false,
       signIn: () =>
         set({
           user: defaultUser,
           workspace: defaultWorkspace,
-          workspaces: [defaultWorkspace, alternateWorkspace],
         }),
-      signOut: () => set({ user: null, workspace: null, workspaces: [] }),
+      signInAs: (userId) => {
+        const u = users.find((m) => m.id === userId) ?? currentUser;
+        set({
+          user: {
+            id: u.id,
+            name: u.name,
+            email: u.email,
+            title: u.title,
+            role: u.role,
+          },
+          workspace: defaultWorkspace,
+        });
+      },
+      signOut: () => set({ user: null, workspace: null }),
       setHydrated: (v) => set({ hydrated: v }),
     }),
     {
-      name: "pegasus-crm-auth",
+      name: "pegasus-ac-auth",
       storage: createJSONStorage(() => localStorage),
       partialize: (s) => ({
         user: s.user,
         workspace: s.workspace,
-        workspaces: s.workspaces,
       }),
       onRehydrateStorage: () => (s) => s?.setHydrated(true),
     },

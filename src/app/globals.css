@@ -298,8 +298,8 @@
     animation: shimmer 4s linear infinite;
   }
 
-  /* CRM-specific helper: pill that draws attention to a deal stage / lead
-     status without going full StatusPill — useful inside dense tables. */
+  /* Compact attention pill used inside dense tables (lighter weight than
+     StatusBadge — handy for tiny numeric counters or single-letter tags). */
   .chip {
     display: inline-flex;
     align-items: center;
@@ -311,4 +311,28 @@
     letter-spacing: 0.02em;
     text-transform: uppercase;
   }
+}
+
+/* ─── MapLibre popup: strip the default white wrapper so the inner
+       <SitePopup/> card is the only visible surface. ─── */
+.pegasus-popup .maplibregl-popup-content {
+  background: transparent !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+.pegasus-popup .maplibregl-popup-tip {
+  display: none !important;
+}
+.pegasus-popup .maplibregl-popup-close-button {
+  display: none !important;
+}
+
+/* Style maplibre attribution / controls to blend with the dark UI. */
+.maplibregl-ctrl-attrib {
+  background: rgba(0, 0, 0, 0.45) !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+.maplibregl-ctrl-attrib a {
+  color: rgba(255, 255, 255, 0.9) !important;
 }

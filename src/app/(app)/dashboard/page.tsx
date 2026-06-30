@@ -1,22 +1,27 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo } from "react";
 import {
   ArrowRight,
-  ArrowUpRight,
-  Award,
-  Briefcase,
   CalendarClock,
+  CalendarDays,
   CheckCircle2,
-  CircleDot,
-  Clock,
-  Flame,
+  CircleAlert,
+  ClipboardCheck,
+  DollarSign,
+  HardHat,
+  PlugZap,
   Plus,
+  ScrollText,
   Sparkles,
+  Star,
+  Timer,
   TrendingUp,
-  Users,
+  Wrench,
 } from "lucide-react";
 
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,55 +31,102 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { TimeStamp } from "@/components/common/TimeStamp";
-import { PersonChip } from "@/components/common/PersonChip";
-import { cn } from "@/lib/utils";
-import { compactNumber, formatCurrency, initials, relativeTime } from "@/lib/format";
-import {
-  contactMap,
-  companyMap,
-  currentUser,
-  memberMap,
-  overdueActivitiesCount,
-  pipelineByStage,
-  openPipelineValue,
-  wonThisMonth,
-  winRate,
-} from "@/features/common/seed";
-import { useDealList } from "@/features/deals/hooks";
-import { useActivityList } from "@/features/activities/hooks";
-import { useInboxList } from "@/features/inbox/hooks";
-import { DEAL_STAGE_META, type DealStage } from "@/features/common/types";
+import { EmptyState } from "@/components/common/EmptyState";
+import { StatTile } from "@/components/common/StatTile";
+import { StatusBadge } from "@/components/common/StatusBadge";
 import { useAuthStore } from "@/features/auth/authStore";
+import { useDateLocale, useT } from "@/features/locale/hooks";
+import { useContracts, useVisits } from "@/features/service/hooks";
+import {
+  contractStatusBuckets,
+  currentUser,
+  customerMap,
+  engineers,
+  engineerStats,
+  overdueVisitsCount,
+  salesThisMonth,
+  salesThisWeek,
+  salesThisYear,
+  salesToday,
+  upcomingVisitsCount,
+  userMap,
+} from "@/features/service/seed";
+import {
+  CONTRACT_STATUS_META,
+  CONTRACT_TYPE_META,
+  VISIT_STATUS_META,
+} from "@/features/service/types";
+import { formatCurrency, initials } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export default function DashboardOverviewPage() {
   const user = useAuthStore((s) => s.user) ?? currentUser;
-  const dealsQ = useDealList();
-  const activitiesQ = useActivityList();
-  const inboxQ = useInboxList();
+  const visitsQ = useVisits();
+  const contractsQ = useContracts();
+  const t = useT();
+  const dateLocale = useDateLocale();
 
-  const deals = dealsQ.data ?? [];
-  const activities = activitiesQ.data ?? [];
-  const inbox = inboxQ.data ?? [];
+  const greeting = (() => {
+    const h = new Date().getHours();
+    if (h < 12) return t("common.greeting.morning");
+    if (h < 18) return t("common.greeting.afternoon");
+    return t("common.greeting.evening");
+  })();
 
-  const stageTotals = pipelineByStage();
-  const openValue = openPipelineValue();
-  const wonMonth = wonThisMonth();
-  const rate = winRate();
-  const overdue = overdueActivitiesCount();
+  const today = salesToday();
+  const week = salesThisWeek();
+  const month = salesThisMonth();
+  const year = salesThisYear();
+  const buckets = contractStatusBuckets();
+  const upcoming = upcomingVisitsCount();
+  const overdue = overdueVisitsCount();
 
-  const topDeals = [...deals]
-    .filter((d) => d.stage !== "closed_won" && d.stage !== "closed_lost")
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 6);
+  const visits = useMemo(() => visitsQ.data ?? [], [visitsQ.data]);
+  const contracts = useMemo(() => contractsQ.data ?? [], [contractsQ.data]);
 
-  const upcomingTasks = [...activities]
-    .filter((a) => !a.completedAt)
-    .sort((a, b) => new Date(a.dueAt).getTime() - new Date(b.dueAt).getTime())
-    .slice(0, 5);
+  const nextVisits = useMemo(
+    () =>
+      [...visits]
+        .filter((v) => v.status === "scheduled" || v.status === "in_progress")
+        .sort(
+          (a, b) =>
+            new Date(a.scheduledAt).getTime() -
+            new Date(b.scheduledAt).getTime(),
+        )
+        .slice(0, 6),
+    [visits],
+  );
 
-  const unreadInbox = inbox.filter((c) => c.unread).slice(0, 4);
+  const expiringContracts = useMemo(
+    () =>
+      [...contracts]
+        .filter(
+          (c) => c.status === "expiring_soon" || c.status === "awaiting_renewal",
+        )
+        .sort(
+          (a, b) =>
+            new Date(a.endDate).getTime() - new Date(b.endDate).getTime(),
+        )
+        .slice(0, 5),
+    [contracts],
+  );
+
+  const monthBounds = useMemo(() => {
+    const start = new Date();
+    start.setDate(1);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(start);
+    end.setMonth(end.getMonth() + 1);
+    return { start, end };
+  }, []);
+
+  const engineerLeaderboard = useMemo(
+    () =>
+      engineers
+        .map((e) => engineerStats(e.id, monthBounds.start, monthBounds.end))
+        .sort((a, b) => b.revenue - a.revenue),
+    [monthBounds],
+  );
 
   return (
     <div className="space-y-6">
@@ -82,284 +134,250 @@ export default function DashboardOverviewPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
-            {greeting()} · {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+            {greeting} ·{" "}
+            {new Date().toLocaleDateString(dateLocale, {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+            })}
           </p>
           <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight">
-            Welcome back, {user.name.split(" ")[0]}.
+            {t("dashboard.welcomeBack")}, {user.name.split(" ")[0]}.
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Your pipeline is humming. Here&apos;s what to look at first.
+            Pegasus AC Service · {upcoming} {t("dashboard.upcomingVisits").toLowerCase()} ·{" "}
+            <span className={cn(overdue > 0 && "text-rose-400")}>
+              {overdue} {t("common.overdue").toLowerCase()}
+            </span>
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-1.5">
-            <CalendarClock className="h-3.5 w-3.5" />
-            Today
+          <Button asChild variant="outline" className="gap-1.5">
+            <Link href="/dashboard/scheduling">
+              <CalendarClock className="h-3.5 w-3.5" />
+              {t("dashboard.todaysSchedule")}
+            </Link>
           </Button>
-          <Button className="gap-1.5">
-            <Plus className="h-3.5 w-3.5" />
-            New deal
+          <Button asChild className="gap-1.5">
+            <Link href="/dashboard/quotations/new">
+              <Plus className="h-3.5 w-3.5" />
+              {t("dashboard.newQuotation")}
+            </Link>
           </Button>
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          icon={Briefcase}
-          label="Open pipeline"
-          value={formatCurrency(openValue)}
-          trend="+12% MoM"
-          tone="primary"
-        />
-        <StatCard
-          icon={Award}
-          label="Closed-won this month"
-          value={formatCurrency(wonMonth)}
-          trend="+8 deals"
-          tone="success"
-        />
-        <StatCard
-          icon={TrendingUp}
-          label="Win rate"
-          value={`${Math.round(rate * 100)}%`}
-          trend="last 90 days"
-          tone="accent"
-        />
-        <StatCard
-          icon={Flame}
-          label="Overdue tasks"
-          value={overdue.toString()}
-          trend={overdue > 0 ? "Needs attention" : "All clear"}
-          tone={overdue > 0 ? "warn" : "muted"}
-        />
-      </div>
+      {/* Sales summary */}
+      <section className="space-y-3">
+        <SectionHeading icon={DollarSign} title={t("dashboard.salesSummary")} />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatTile
+            icon={Timer}
+            label={t("common.today")}
+            value={formatCurrency(today.income)}
+            hint={`${formatCurrency(today.expense)} ${t("common.expenses").toLowerCase()}`}
+            tone="primary"
+          />
+          <StatTile
+            icon={CalendarDays}
+            label={t("common.thisWeek")}
+            value={formatCurrency(week.income)}
+            hint={`${week.net >= 0 ? "+" : ""}${formatCurrency(week.net)} ${t("common.net").toLowerCase()}`}
+            tone={week.net >= 0 ? "success" : "destructive"}
+          />
+          <StatTile
+            icon={TrendingUp}
+            label={t("common.thisMonth")}
+            value={formatCurrency(month.income)}
+            hint={`${month.net >= 0 ? "+" : ""}${formatCurrency(month.net)} ${t("common.net").toLowerCase()}`}
+            tone={month.net >= 0 ? "success" : "destructive"}
+          />
+          <StatTile
+            icon={Sparkles}
+            label={t("common.thisYear")}
+            value={formatCurrency(year.income)}
+            hint={`${formatCurrency(year.expense)} ${t("common.expenses").toLowerCase()}`}
+            tone="accent"
+          />
+        </div>
+      </section>
 
-      <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-        {/* Pipeline summary */}
+      {/* Contracts summary */}
+      <section className="space-y-3">
+        <SectionHeading
+          icon={ScrollText}
+          title={t("dashboard.serviceContracts")}
+        />
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <StatTile
+            icon={PlugZap}
+            label={t("stats.active")}
+            value={String(buckets.active)}
+            hint={`${contracts.length} ${t("common.total").toLowerCase()}`}
+            tone="success"
+          />
+          <StatTile
+            icon={CalendarClock}
+            label={t("stats.expiringSoon")}
+            value={String(buckets.expiring_soon)}
+            hint="30d"
+            tone="warn"
+          />
+          <StatTile
+            icon={CheckCircle2}
+            label={t("common.completed")}
+            value={String(buckets.completed)}
+            tone="muted"
+          />
+          <StatTile
+            icon={CircleAlert}
+            label={t("stats.awaitingRenewal")}
+            value={String(buckets.awaiting_renewal)}
+            tone="accent"
+          />
+        </div>
+      </section>
+
+      {/* Main grid */}
+      <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+        {/* Upcoming visits */}
         <Card>
           <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
             <div>
-              <CardTitle className="text-base">Pipeline by stage</CardTitle>
-              <CardDescription>Click into a stage to see the deals.</CardDescription>
+              <CardTitle className="text-base">
+                {t("dashboard.upcomingVisits")}
+              </CardTitle>
+              <CardDescription>
+                {t("dashboard.upcomingVisitsHint")}
+              </CardDescription>
             </div>
             <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs">
-              <Link href="/dashboard/pipeline">
-                Open pipeline <ArrowRight className="h-3.5 w-3.5" />
+              <Link href="/dashboard/scheduling">
+                {t("dashboard.openScheduling")} <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Button>
           </CardHeader>
-          <CardContent className="space-y-2.5">
-            {(Object.keys(stageTotals) as DealStage[])
-              .filter((s) => s !== "closed_lost")
-              .map((stage) => {
-                const meta = DEAL_STAGE_META[stage];
-                const slot = stageTotals[stage];
-                const pct =
-                  openValue > 0
-                    ? Math.round((slot.value / Math.max(openValue, 1)) * 100)
-                    : 0;
+          <CardContent className="space-y-1.5">
+            {nextVisits.length === 0 ? (
+              <EmptyState
+                icon={CheckCircle2}
+                title="Inbox zero for the field."
+                description="Nothing booked. Time to nudge those contract renewals."
+              />
+            ) : (
+              nextVisits.map((v) => {
+                const customer = customerMap[v.customerId];
+                const engineer = userMap[v.engineerId];
+                const status = VISIT_STATUS_META[v.status];
                 return (
                   <Link
-                    key={stage}
-                    href={`/dashboard/pipeline?stage=${stage}`}
+                    key={v.id}
+                    href={`/dashboard/work-orders/${v.id}`}
                     className="group flex items-center gap-3 rounded-lg border border-border/60 bg-card/40 px-3 py-2.5 transition hover:border-primary/40"
                   >
                     <span
-                      className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-semibold"
+                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[10px] font-bold"
                       style={{
-                        backgroundColor: `${meta.color}22`,
-                        color: meta.color,
+                        backgroundColor: `${status.color}22`,
+                        color: status.color,
                       }}
                     >
-                      {slot.count}
+                      {customer?.name.charAt(0).toUpperCase() ?? "?"}
                     </span>
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="text-xs font-medium text-foreground">
-                          {meta.label}
-                        </span>
-                        <span className="text-xs font-semibold text-foreground">
-                          {formatCurrency(slot.value)}
-                        </span>
-                      </div>
-                      <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                        <div
-                          className="h-full rounded-full transition-all"
-                          style={{
-                            width: `${pct}%`,
-                            background: `linear-gradient(90deg, ${meta.color}, ${meta.color}99)`,
-                          }}
-                        />
-                      </div>
+                      <p className="truncate text-xs font-medium text-foreground">
+                        {customer?.name}
+                      </p>
+                      <p className="truncate text-[10px] text-muted-foreground">
+                        {CONTRACT_TYPE_META[v.type].label} ·{" "}
+                        {engineer?.name ?? "Unassigned"} · {v.number}
+                      </p>
                     </div>
-                    <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" />
+                    <StatusBadge
+                      label={status.label}
+                      tone={status.tone}
+                      color={status.color}
+                    />
+                    <span className="ml-2 hidden text-right text-[10px] text-muted-foreground sm:block">
+                      {new Date(v.scheduledAt).toLocaleString(dateLocale, {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </span>
                   </Link>
                 );
-              })}
+              })
+            )}
           </CardContent>
         </Card>
 
-        {/* Inbox preview */}
+        {/* Expiring contracts */}
         <Card>
           <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
             <div>
-              <CardTitle className="text-base">Inbox highlights</CardTitle>
-              <CardDescription>{inbox.filter((c) => c.unread).length} unread threads</CardDescription>
+              <CardTitle className="text-base">
+                {t("dashboard.renewalRadar")}
+              </CardTitle>
+              <CardDescription>
+                {t("dashboard.renewalRadarHint")}
+              </CardDescription>
             </div>
             <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs">
-              <Link href="/dashboard/inbox">
-                Open <ArrowRight className="h-3.5 w-3.5" />
+              <Link href="/dashboard/contracts">
+                {t("common.viewAll")} <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </Button>
           </CardHeader>
           <CardContent className="space-y-2">
-            {unreadInbox.length === 0 ? (
-              <EmptyHint icon={CheckCircle2} text="Inbox zero. Nice work." />
+            {expiringContracts.length === 0 ? (
+              <EmptyState
+                icon={Sparkles}
+                title="Nothing expiring."
+                description="Every contract is still healthy."
+              />
             ) : (
-              unreadInbox.map((c) => (
-                <Link
-                  key={c.id}
-                  href={`/dashboard/inbox?thread=${c.id}`}
-                  className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-card/40 p-2.5 transition hover:border-primary/40"
-                >
-                  <Avatar className="h-7 w-7">
-                    <AvatarFallback className="bg-primary/15 text-[10px] font-semibold text-primary">
-                      {initials(c.fromName, c.fromEmail)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <p className="truncate text-xs font-semibold text-foreground">
-                        {c.fromName}
-                      </p>
-                      <span className="text-[10px] text-muted-foreground">
-                        {relativeTime(c.receivedAt)}
-                      </span>
-                    </div>
-                    <p className="truncate text-[11px] font-medium text-foreground">
-                      {c.subject}
-                    </p>
-                    <p className="line-clamp-2 text-[10px] text-muted-foreground">
-                      {c.preview}
-                    </p>
-                  </div>
-                </Link>
-              ))
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-        {/* Top deals */}
-        <Card>
-          <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
-            <div>
-              <CardTitle className="text-base">Top open deals</CardTitle>
-              <CardDescription>Sorted by value across all stages.</CardDescription>
-            </div>
-            <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs">
-              <Link href="/dashboard/deals">
-                All deals <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-1.5">
-            {topDeals.map((d) => {
-              const meta = DEAL_STAGE_META[d.stage];
-              const owner = memberMap[d.ownerId];
-              return (
-                <Link
-                  key={d.id}
-                  href={`/dashboard/deals/${d.id}`}
-                  className="group flex items-center gap-3 rounded-lg border border-border/60 bg-card/40 px-3 py-2 transition hover:border-primary/40"
-                >
-                  <span
-                    className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[10px] font-bold uppercase"
-                    style={{
-                      backgroundColor: `${meta.color}22`,
-                      color: meta.color,
-                    }}
-                  >
-                    {companyMap[d.companyId]?.name.charAt(0) ?? "?"}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-xs font-medium text-foreground">
-                      {d.name}
-                    </p>
-                    <p className="truncate text-[10px] text-muted-foreground">
-                      {companyMap[d.companyId]?.name} · {owner?.name ?? "Unassigned"}
-                    </p>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className="h-5 text-[10px]"
-                    style={{ borderColor: `${meta.color}66`, color: meta.color }}
-                  >
-                    {meta.label}
-                  </Badge>
-                  <span className="ml-2 text-xs font-semibold tabular-nums">
-                    ${compactNumber(d.value)}
-                  </span>
-                </Link>
-              );
-            })}
-          </CardContent>
-        </Card>
-
-        {/* Upcoming tasks */}
-        <Card>
-          <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
-            <div>
-              <CardTitle className="text-base">My next tasks</CardTitle>
-              <CardDescription>
-                {upcomingTasks.length} open this week
-              </CardDescription>
-            </div>
-            <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs">
-              <Link href="/dashboard/activities">
-                All <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-1.5">
-            {upcomingTasks.length === 0 ? (
-              <EmptyHint icon={Sparkles} text="No tasks left. Touch grass." />
-            ) : (
-              upcomingTasks.map((t) => {
-                const isOverdue = new Date(t.dueAt).getTime() < Date.now();
+              expiringContracts.map((c) => {
+                const customer = customerMap[c.customerId];
+                const meta = CONTRACT_STATUS_META[c.status];
+                const daysOut = Math.ceil(
+                  (new Date(c.endDate).getTime() - Date.now()) / 86_400_000,
+                );
                 return (
-                  <div
-                    key={t.id}
-                    className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-card/40 p-2.5"
+                  <Link
+                    key={c.id}
+                    href={`/dashboard/contracts/${c.id}`}
+                    className="flex items-start gap-2.5 rounded-lg border border-border/60 bg-card/40 p-2.5 transition hover:border-primary/40"
                   >
-                    <CircleDot
-                      className={cn(
-                        "mt-0.5 h-3.5 w-3.5 shrink-0",
-                        isOverdue ? "text-destructive" : "text-primary",
-                      )}
-                    />
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-primary/15 text-[10px] font-semibold text-primary">
+                        {initials(customer?.name ?? "?")}
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium text-foreground">
-                        {t.subject}
+                      <p className="truncate text-xs font-semibold text-foreground">
+                        {customer?.name}
                       </p>
-                      <div className="mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span className={cn(isOverdue && "text-destructive")}>
-                          {relativeTime(t.dueAt)}
+                      <p className="truncate text-[10px] text-muted-foreground">
+                        {CONTRACT_TYPE_META[c.type].label} · {c.number}
+                      </p>
+                      <div className="mt-1 flex items-center gap-1.5">
+                        <StatusBadge
+                          label={meta.label}
+                          tone={meta.tone}
+                          color={meta.color}
+                        />
+                        <span className="text-[10px] text-muted-foreground">
+                          {daysOut > 0 ? `in ${daysOut}d` : `${-daysOut}d ago`}
                         </span>
-                        {t.contactId && (
-                          <>
-                            <span>·</span>
-                            <span className="truncate">
-                              {contactMap[t.contactId]?.fullName}
-                            </span>
-                          </>
-                        )}
                       </div>
                     </div>
-                  </div>
+                    <span className="text-xs font-semibold tabular-nums">
+                      {formatCurrency(c.value)}
+                    </span>
+                  </Link>
                 );
               })
             )}
@@ -367,131 +385,169 @@ export default function DashboardOverviewPage() {
         </Card>
       </div>
 
-      {/* Team activity */}
+      {/* Engineer performance */}
       <Card>
         <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3">
           <div>
-            <CardTitle className="text-base">Team this week</CardTitle>
-            <CardDescription>Who&apos;s closing what.</CardDescription>
+            <CardTitle className="text-base">
+              {t("dashboard.engineerPerformance")}
+            </CardTitle>
+            <CardDescription>
+              {t("dashboard.engineerPerformanceHint")}
+            </CardDescription>
           </div>
-          <Button variant="ghost" size="sm" className="gap-1.5 text-xs">
-            <Users className="h-3.5 w-3.5" /> Roster
+          <Button asChild variant="ghost" size="sm" className="gap-1.5 text-xs">
+            <Link href="/dashboard/engineers">
+              {t("dashboard.openRoster")} <HardHat className="h-3.5 w-3.5" />
+            </Link>
           </Button>
         </CardHeader>
         <CardContent>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {Object.values(memberMap).map((member) => {
-              const owned = deals.filter((d) => d.ownerId === member.id);
-              const wonVal = owned
-                .filter((d) => d.stage === "closed_won")
-                .reduce((s, d) => s + d.value, 0);
-              const openVal = owned
-                .filter((d) => d.stage !== "closed_won" && d.stage !== "closed_lost")
-                .reduce((s, d) => s + d.value, 0);
-              return (
-                <div
-                  key={member.id}
-                  className="rounded-lg border border-border/60 bg-card/40 p-3"
+            {engineerLeaderboard.map(
+              ({
+                engineer,
+                completedJobs,
+                scheduledJobs,
+                serviceHours,
+                revenue,
+                rating,
+              }) => (
+                <Link
+                  key={engineer?.id ?? "x"}
+                  href={`/dashboard/engineers/${engineer?.id}`}
+                  className="rounded-lg border border-border/60 bg-card/40 p-3 transition hover:border-primary/40"
                 >
-                  <PersonChip
-                    name={member.name}
-                    email={member.email}
-                    size="md"
-                  />
-                  <p className="mt-1 ml-9 -translate-y-3 text-[10px] text-muted-foreground">
-                    {member.title}
-                  </p>
-                  <div className="mt-1 grid grid-cols-2 gap-2 text-[10px] text-muted-foreground">
-                    <div>
-                      <p className="uppercase tracking-wider">Open</p>
-                      <p className="mt-0.5 text-sm font-semibold text-foreground">
-                        ${compactNumber(openVal)}
+                  <div className="flex items-center gap-2.5">
+                    <Avatar className="h-9 w-9">
+                      <AvatarFallback
+                        className="text-[11px] font-semibold"
+                        style={{
+                          background: `hsl(${engineer?.hue ?? 215} 80% 35%)`,
+                          color: "white",
+                        }}
+                      >
+                        {initials(engineer?.name ?? "")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-semibold text-foreground">
+                        {engineer?.name}
+                      </p>
+                      <p className="truncate text-[10px] text-muted-foreground">
+                        {engineer?.title}
                       </p>
                     </div>
-                    <div>
-                      <p className="uppercase tracking-wider">Won</p>
-                      <p className="mt-0.5 text-sm font-semibold text-foreground">
-                        ${compactNumber(wonVal)}
-                      </p>
-                    </div>
+                    <Badge variant="outline" className="gap-1 text-[10px]">
+                      <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
+                      {rating.toFixed(1)}
+                    </Badge>
                   </div>
-                </div>
-              );
-            })}
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-[10px] text-muted-foreground">
+                    <Stat
+                      label={t("common.completed")}
+                      value={String(completedJobs)}
+                    />
+                    <Stat
+                      label={t("common.scheduled")}
+                      value={String(scheduledJobs)}
+                    />
+                    <Stat label="h" value={`${serviceHours}h`} />
+                  </div>
+                  <div className="mt-2 flex items-center justify-between border-t border-border/60 pt-2 text-[10px]">
+                    <span className="text-muted-foreground">
+                      {t("common.income")} ({t("common.thisMonth")})
+                    </span>
+                    <span className="font-semibold text-foreground">
+                      {formatCurrency(revenue)}
+                    </span>
+                  </div>
+                </Link>
+              ),
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Quick alerts */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Link
+          href="/dashboard/work-orders?status=overdue"
+          className="group flex items-center justify-between rounded-xl border border-rose-500/30 bg-rose-500/8 p-3 text-rose-300 hover:bg-rose-500/12"
+        >
+          <div>
+            <p className="text-[10px] uppercase tracking-wider opacity-80">
+              {t("dashboard.alerts.overdue")}
+            </p>
+            <p className="mt-1 font-display text-xl font-semibold">{overdue}</p>
+          </div>
+          <CircleAlert className="h-5 w-5" />
+        </Link>
+        <Link
+          href="/dashboard/scheduling"
+          className="group flex items-center justify-between rounded-xl border border-sky-500/30 bg-sky-500/8 p-3 text-sky-300 hover:bg-sky-500/12"
+        >
+          <div>
+            <p className="text-[10px] uppercase tracking-wider opacity-80">
+              {t("dashboard.alerts.upcoming")}
+            </p>
+            <p className="mt-1 font-display text-xl font-semibold">
+              {upcoming}
+            </p>
+          </div>
+          <Wrench className="h-5 w-5" />
+        </Link>
+        <Link
+          href="/dashboard/my-tasks"
+          className="group flex items-center justify-between rounded-xl border border-primary/30 bg-primary/8 p-3 text-primary hover:bg-primary/12"
+        >
+          <div>
+            <p className="text-[10px] uppercase tracking-wider opacity-80">
+              {t("dashboard.alerts.myTasksToday")}
+            </p>
+            <p className="mt-1 font-display text-xl font-semibold">
+              {
+                visits.filter((v) => {
+                  const sameDay =
+                    new Date(v.scheduledAt).toDateString() ===
+                    new Date().toDateString();
+                  return (
+                    sameDay &&
+                    (v.engineerId === user.id ||
+                      user.role === "administrator" ||
+                      user.role === "manager")
+                  );
+                }).length
+              }
+            </p>
+          </div>
+          <ClipboardCheck className="h-5 w-5" />
+        </Link>
+      </div>
     </div>
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Subcomponents                                                              */
-/* -------------------------------------------------------------------------- */
-
-function StatCard({
+function SectionHeading({
   icon: Icon,
-  label,
-  value,
-  trend,
-  tone,
+  title,
 }: {
-  icon: typeof Briefcase;
-  label: string;
-  value: string;
-  trend: string;
-  tone: "primary" | "success" | "accent" | "warn" | "muted";
+  icon: typeof DollarSign;
+  title: string;
 }) {
-  const toneClass: Record<typeof tone, string> = {
-    primary: "text-primary",
-    success: "text-emerald-400",
-    accent: "text-accent",
-    warn: "text-amber-400",
-    muted: "text-muted-foreground",
-  } as const;
   return (
-    <Card className="overflow-hidden">
-      <CardContent className="p-4">
-        <div className="flex items-center justify-between">
-          <span
-            className={cn(
-              "inline-flex h-8 w-8 items-center justify-center rounded-md bg-foreground/5 ring-1 ring-inset ring-border/60",
-              toneClass[tone],
-            )}
-          >
-            <Icon className="h-3.5 w-3.5" />
-          </span>
-          <span className={cn("text-[10px] font-medium", toneClass[tone])}>
-            {trend}
-          </span>
-        </div>
-        <p className="mt-3 text-[10px] uppercase tracking-wider text-muted-foreground">
-          {label}
-        </p>
-        <p className="mt-1 font-display text-2xl font-semibold tracking-tight">
-          {value}
-        </p>
-      </CardContent>
-    </Card>
-  );
-}
-
-function EmptyHint({ icon: Icon, text }: { icon: typeof Sparkles; text: string }) {
-  return (
-    <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border/60 px-4 py-8 text-center">
-      <Icon className="h-5 w-5 text-muted-foreground" />
-      <p className="text-xs text-muted-foreground">{text}</p>
+    <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+      <Icon className="h-3.5 w-3.5" />
+      {title}
     </div>
   );
 }
 
-function greeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="uppercase tracking-wider">{label}</p>
+      <p className="mt-0.5 text-sm font-semibold text-foreground">{value}</p>
+    </div>
+  );
 }
-
-// Hint to silence the unused-import warning in environments where TimeStamp
-// might be tree-shaken away if no callsite remains.
-void TimeStamp;

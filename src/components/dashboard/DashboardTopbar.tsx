@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import {
   Command,
@@ -17,6 +18,8 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useCommandPalette } from "@/components/shared/CommandPalette";
+import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
+import { useT } from "@/features/locale/hooks";
 import { useSidebarStore } from "./sidebarStore";
 import { UserMenu } from "./UserMenu";
 import { NotificationsMenu } from "./NotificationsMenu";
@@ -28,6 +31,7 @@ export function DashboardTopbar() {
   const mobileOpen = useSidebarStore((s) => s.mobileOpen);
   const setMobileOpen = useSidebarStore((s) => s.setMobileOpen);
   const { open } = useCommandPalette();
+  const t = useT();
   const [mac, setMac] = useState(false);
 
   useEffect(() => {
@@ -77,7 +81,10 @@ export function DashboardTopbar() {
       >
         <Search className="h-3.5 w-3.5" />
         <span className="hidden flex-1 truncate sm:inline">
-          Search contacts, deals, companies…
+          {t("common.search")} · {t("common.customers").toLowerCase()},{" "}
+          {t("common.quotations").toLowerCase()},{" "}
+          {t("common.contracts").toLowerCase()},{" "}
+          {t("common.visits").toLowerCase()}…
         </span>
         <span className="sm:hidden flex-1" />
         <kbd className="hidden items-center gap-1 rounded border border-border/60 bg-muted/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground sm:inline-flex">
@@ -91,9 +98,12 @@ export function DashboardTopbar() {
       </button>
 
       <div className="ml-auto flex items-center gap-1.5">
-        <Button variant="outline" size="sm" className="hidden h-8 gap-1.5 md:inline-flex">
-          <Plus className="h-3.5 w-3.5" /> Quick add
+        <Button variant="outline" size="sm" className="hidden h-8 gap-1.5 md:inline-flex" asChild>
+          <Link href="/dashboard/quotations/new">
+            <Plus className="h-3.5 w-3.5" /> {t("dashboard.newQuotation")}
+          </Link>
         </Button>
+        <LanguageSwitcher variant="expanded" />
         <NotificationsMenu />
         <UserMenu />
       </div>

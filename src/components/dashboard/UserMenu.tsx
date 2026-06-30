@@ -4,12 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Check,
-  Compass,
   HelpCircle,
   LifeBuoy,
   LogOut,
   Palette,
   Settings,
+  Users2,
   UserRound,
 } from "lucide-react";
 
@@ -25,13 +25,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/features/auth/authStore";
 import { initials } from "@/lib/format";
+import { users } from "@/features/service/seed";
+import { ROLE_META } from "@/features/service/types";
 
 export function UserMenu() {
   const router = useRouter();
   const user = useAuthStore((s) => s.user);
   const workspace = useAuthStore((s) => s.workspace);
-  const workspaces = useAuthStore((s) => s.workspaces);
   const signOut = useAuthStore((s) => s.signOut);
+  const signInAs = useAuthStore((s) => s.signInAs);
 
   if (!user) return null;
 
@@ -50,7 +52,7 @@ export function UserMenu() {
           <span className="hidden sm:inline">{user.name.split(" ")[0]}</span>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
+      <DropdownMenuContent align="end" className="w-72">
         <div className="flex items-start gap-3 p-2.5">
           <Avatar className="h-10 w-10 ring-1 ring-primary/20">
             <AvatarFallback className="bg-[image:var(--gradient-primary)] text-xs font-semibold text-primary-foreground">
@@ -64,41 +66,79 @@ export function UserMenu() {
             <p className="truncate text-[10px] text-muted-foreground">
               {user.email}
             </p>
-            <p className="mt-0.5 text-[10px] text-primary">{user.title}</p>
+            <p className="mt-0.5 text-[10px] text-primary">
+              {user.title} · {ROLE_META[user.role].label}
+            </p>
           </div>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
-          Workspaces
+        {workspace && (
+          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
+            {workspace.name} · {workspace.plan}
+          </DropdownMenuLabel>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+          <Users2 className="h-3 w-3" /> Switch role (demo)
         </DropdownMenuLabel>
-        {workspaces.map((ws) => {
-          const active = ws.id === workspace?.id;
-          return (
-            <DropdownMenuItem key={ws.id} className="flex items-center gap-2 text-xs">
-              <Compass className="h-3.5 w-3.5 text-muted-foreground" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-foreground">{ws.name}</p>
-                <p className="truncate text-[10px] text-muted-foreground">
-                  {ws.plan} · {ws.role}
-                </p>
-              </div>
-              {active && <Check className="h-3.5 w-3.5 text-primary" />}
-            </DropdownMenuItem>
-          );
-        })}
+        {users
+          .filter((u) =>
+            ["administrator", "manager", "admin_staff", "engineer"].includes(
+              u.role,
+            ),
+          )
+          .slice(0, 5)
+          .map((u) => {
+            const active = u.id === user.id;
+            return (
+              <DropdownMenuItem
+                key={u.id}
+                className="flex items-center gap-2 text-xs"
+                onSelect={() => signInAs(u.id)}
+              >
+                <Avatar className="h-6 w-6">
+                  <AvatarFallback
+                    className="text-[9px] font-semibold"
+                    style={{
+                      background: `hsl(${u.hue ?? 215} 80% 35%)`,
+                      color: "white",
+                    }}
+                  >
+                    {initials(u.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-foreground">{u.name}</p>
+                  <p className="truncate text-[10px] text-muted-foreground">
+                    {ROLE_META[u.role].label}
+                  </p>
+                </div>
+                {active && <Check className="h-3.5 w-3.5 text-primary" />}
+              </DropdownMenuItem>
+            );
+          })}
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/dashboard/settings#profile" className="flex items-center gap-2 text-xs">
+          <Link
+            href="/dashboard/settings#profile"
+            className="flex items-center gap-2 text-xs"
+          >
             <UserRound className="h-3.5 w-3.5" /> Profile
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/dashboard/settings#appearance" className="flex items-center gap-2 text-xs">
+          <Link
+            href="/dashboard/settings#appearance"
+            className="flex items-center gap-2 text-xs"
+          >
             <Palette className="h-3.5 w-3.5" /> Appearance & theme
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/dashboard/settings" className="flex items-center gap-2 text-xs">
+          <Link
+            href="/dashboard/settings"
+            className="flex items-center gap-2 text-xs"
+          >
             <Settings className="h-3.5 w-3.5" /> Workspace settings
           </Link>
         </DropdownMenuItem>
@@ -135,7 +175,7 @@ export function MockSignInButton() {
       }}
       className="w-full"
     >
-      Sign in as Leo Santoso
+      Sign in to Pegasus AC
     </Button>
   );
 }

@@ -16,10 +16,11 @@ import { dashboardSidebar, type SidebarItem } from "@/config/dashboard";
 import { Logo } from "@/components/shared/Logo";
 import { useSidebarStore } from "./sidebarStore";
 import {
-  unreadNotificationsCount,
-} from "@/features/notifications/hooks";
-import { unreadInboxCount } from "@/features/inbox/hooks";
-import { openActivityCount } from "@/features/activities/hooks";
+  unreadNotificationCount,
+  upcomingVisitsCount,
+} from "@/features/service/seed";
+import { useAuthStore } from "@/features/auth/authStore";
+import { useT } from "@/features/locale/hooks";
 
 interface DashboardSidebarProps {
   variant?: "desktop" | "mobile";
@@ -38,10 +39,11 @@ export function DashboardSidebar({ variant = "desktop" }: DashboardSidebarProps)
   const closeMobile = useSidebarStore((s) => s.setMobileOpen);
   const pathname = usePathname();
   const hash = useLocationHash();
+  const role = useAuthStore((s) => s.user?.role) ?? "administrator";
+  const t = useT();
 
-  const inboxUnread = unreadInboxCount();
-  const notifUnread = unreadNotificationsCount();
-  const todoCount = openActivityCount();
+  const upcoming = upcomingVisitsCount();
+  const notifUnread = unreadNotificationCount();
 
   const hashesByPath = new Map<string, Set<string>>();
   for (const section of dashboardSidebar) {
@@ -65,11 +67,11 @@ export function DashboardSidebar({ variant = "desktop" }: DashboardSidebarProps)
   };
 
   const resolveItem = (item: SidebarItem): SidebarItem => {
-    if (item.href === "/dashboard/inbox") {
+    if (item.href === "/dashboard/scheduling") {
       return {
         ...item,
-        badge: inboxUnread > 0 ? String(inboxUnread) : undefined,
-        badgeTone: inboxUnread > 0 ? "accent" : item.badgeTone,
+        badge: upcoming > 0 ? String(upcoming) : undefined,
+        badgeTone: upcoming > 0 ? "default" : item.badgeTone,
       };
     }
     if (item.href === "/dashboard/notifications") {
@@ -84,15 +86,11 @@ export function DashboardSidebar({ variant = "desktop" }: DashboardSidebarProps)
         badgeTone: notifUnread > 0 ? "accent" : item.badgeTone,
       };
     }
-    if (item.href === "/dashboard/activities") {
-      return {
-        ...item,
-        badge: todoCount > 0 ? String(todoCount) : undefined,
-        badgeTone: todoCount > 0 ? "default" : item.badgeTone,
-      };
-    }
     return item;
   };
+
+  const isAllowed = (item: SidebarItem): boolean =>
+    !item.roles || item.roles.includes(role);
 
   const handleNavClick = () => {
     if (variant === "mobile") closeMobile(false);
@@ -120,8 +118,14 @@ export function DashboardSidebar({ variant = "desktop" }: DashboardSidebarProps)
       </div>
 
       <nav className="flex-1 space-y-5 overflow-y-auto px-2.5 py-4">
-        {dashboardSidebar.map((section) => (
-          <Fragment key={section.label}>
+        {dashboardSidebar
+          .map((section) => ({
+            ...section,
+            items: section.items.filter(isAllowed),
+          }))
+          .filter((section) => section.items.length > 0)
+          .map((section) => (
+          <Fragment key={section.labelKey}>
             <div className="space-y-1">
               <AnimatePresence initial={false}>
                 {!collapsed && (
@@ -132,7 +136,7 @@ export function DashboardSidebar({ variant = "desktop" }: DashboardSidebarProps)
                     transition={{ duration: 0.18 }}
                     className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-[0.22em] text-muted-foreground"
                   >
-                    {section.label}
+                    {t(section.labelKey)}
                   </motion.p>
                 )}
               </AnimatePresence>
@@ -144,6 +148,7 @@ export function DashboardSidebar({ variant = "desktop" }: DashboardSidebarProps)
                     <SidebarLink
                       key={item.href}
                       item={resolved}
+                      label={t(resolved.labelKey)}
                       collapsed={collapsed}
                       isActive={isItemActive(item.href)}
                       onClick={handleNavClick}
@@ -179,12 +184,19 @@ export function DashboardSidebar({ variant = "desktop" }: DashboardSidebarProps)
 
 interface SidebarLinkProps {
   item: SidebarItem;
+  label: string;
   collapsed: boolean;
   isActive: boolean;
   onClick?: () => void;
 }
 
-function SidebarLink({ item, collapsed, isActive, onClick }: SidebarLinkProps) {
+function SidebarLink({
+  item,
+  label,
+  collapsed,
+  isActive,
+  onClick,
+}: SidebarLinkProps) {
   const Icon = item.icon;
 
   const content = (
@@ -214,7 +226,7 @@ function SidebarLink({ item, collapsed, isActive, onClick }: SidebarLinkProps) {
         )}
       />
       {!collapsed && (
-        <span className="relative flex-1 truncate">{item.label}</span>
+        <span className="relative flex-1 truncate">{label}</span>
       )}
       {!collapsed && item.badge && (
         <Badge
@@ -233,7 +245,7 @@ function SidebarLink({ item, collapsed, isActive, onClick }: SidebarLinkProps) {
       <TooltipTrigger asChild>{content}</TooltipTrigger>
       <TooltipContent side="right">
         <span className="flex items-center gap-2">
-          {item.label}
+          {label}
           {item.badge && (
             <Badge
               variant={item.badgeTone === "accent" ? "accent" : "outline"}

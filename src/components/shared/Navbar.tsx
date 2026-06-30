@@ -126,7 +126,7 @@ export function Navbar() {
               <Button asChild size="sm" variant="default" className="gap-1.5">
                 <Link href="/dashboard">
                   <Sparkles className="h-3.5 w-3.5" />
-                  Open the CRM
+                  Open dashboard
                 </Link>
               </Button>
             </div>
@@ -162,7 +162,7 @@ export function Navbar() {
                   <Button asChild>
                     <Link href="/dashboard">
                       <Sparkles className="h-3.5 w-3.5" />
-                      Open CRM
+                      Dashboard
                     </Link>
                   </Button>
                 </div>

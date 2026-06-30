@@ -1,139 +1,143 @@
 import {
   Bell,
-  Briefcase,
-  Building2,
   CalendarClock,
-  CreditCard,
-  Inbox,
-  KanbanSquare,
+  ClipboardCheck,
+  FileText,
+  HandCoins,
+  HardHat,
   LayoutDashboard,
-  ListChecks,
   PieChart,
+  Receipt,
+  ScrollText,
   Settings,
-  Sparkles,
-  Target,
   Users,
-  Users2,
+  Wrench,
   type LucideIcon,
 } from "lucide-react";
 
+import type { DictKey } from "@/features/locale/dictionary";
+import type { UserRole } from "@/features/service/types";
+
 export interface SidebarItem {
-  label: string;
+  /** Dictionary key — translated at render time. */
+  labelKey: DictKey;
   href: string;
   icon: LucideIcon;
   badge?: string;
   badgeTone?: "default" | "accent" | "destructive";
-  /** Hide from collapsed (icon-only) sidebar. */
   hideCollapsed?: boolean;
+  /** Roles allowed to see this item. Default = all roles. */
+  roles?: UserRole[];
 }
 
 export interface SidebarSection {
-  label: string;
+  /** Dictionary key — translated at render time. */
+  labelKey: DictKey;
   items: SidebarItem[];
 }
 
+/**
+ * Sidebar nav for the AC Service application. Item visibility is filtered at
+ * render time by the active user's role: engineers see a slimmed-down nav
+ * with just their work, admin staff see customer + finance flows, etc.
+ */
 export const dashboardSidebar: SidebarSection[] = [
   {
-    label: "Workspace",
+    labelKey: "nav.workspace",
     items: [
-      { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
       {
-        label: "Pipeline",
-        href: "/dashboard/pipeline",
-        icon: KanbanSquare,
+        labelKey: "nav.dashboard",
+        href: "/dashboard",
+        icon: LayoutDashboard,
+      },
+      {
+        labelKey: "nav.scheduling",
+        href: "/dashboard/scheduling",
+        icon: CalendarClock,
+        badge: "upcoming",
+        badgeTone: "default",
+      },
+      {
+        labelKey: "nav.myTasks",
+        href: "/dashboard/my-tasks",
+        icon: ClipboardCheck,
+        roles: ["engineer", "administrator", "manager"],
+      },
+    ],
+  },
+  {
+    labelKey: "nav.operations",
+    items: [
+      {
+        labelKey: "nav.customers",
+        href: "/dashboard/customers",
+        icon: Users,
+        roles: ["administrator", "manager", "admin_staff"],
+      },
+      {
+        labelKey: "nav.engineers",
+        href: "/dashboard/engineers",
+        icon: HardHat,
+        roles: ["administrator", "manager", "admin_staff"],
+      },
+      {
+        labelKey: "nav.quotations",
+        href: "/dashboard/quotations",
+        icon: FileText,
+        roles: ["administrator", "manager", "admin_staff"],
+      },
+      {
+        labelKey: "nav.contracts",
+        href: "/dashboard/contracts",
+        icon: ScrollText,
         badge: "Live",
         badgeTone: "accent",
+        roles: ["administrator", "manager", "admin_staff"],
       },
       {
-        label: "Inbox",
-        href: "/dashboard/inbox",
-        icon: Inbox,
-        /** Badge value overridden at render time by the unread count. */
-        badge: "inbox",
-        badgeTone: "default",
+        labelKey: "nav.workOrders",
+        href: "/dashboard/work-orders",
+        icon: Wrench,
       },
     ],
   },
   {
-    label: "Records",
+    labelKey: "nav.finance",
     items: [
       {
-        label: "Contacts",
-        href: "/dashboard/contacts",
-        icon: Users,
+        labelKey: "nav.invoices",
+        href: "/dashboard/finance/invoices",
+        icon: Receipt,
+        roles: ["administrator", "manager", "admin_staff"],
       },
       {
-        label: "Companies",
-        href: "/dashboard/companies",
-        icon: Building2,
+        labelKey: "nav.expenses",
+        href: "/dashboard/finance/expenses",
+        icon: HandCoins,
+        roles: ["administrator", "manager", "admin_staff"],
       },
       {
-        label: "Deals",
-        href: "/dashboard/deals",
-        icon: Briefcase,
-        badge: "$",
-        badgeTone: "accent",
-      },
-      {
-        label: "Leads",
-        href: "/dashboard/leads",
-        icon: Target,
-        badge: "New",
-        badgeTone: "accent",
-      },
-    ],
-  },
-  {
-    label: "Productivity",
-    items: [
-      {
-        label: "Activities",
-        href: "/dashboard/activities",
-        icon: ListChecks,
-        /** Badge value overridden at render time by the live task count. */
-        badge: "todo",
-        badgeTone: "default",
-      },
-      {
-        label: "Calendar",
-        href: "/dashboard/calendar",
-        icon: CalendarClock,
-      },
-      {
-        label: "Reports",
+        labelKey: "nav.reports",
         href: "/dashboard/reports",
         icon: PieChart,
+        roles: ["administrator", "manager"],
       },
     ],
   },
   {
-    label: "Account",
+    labelKey: "nav.account",
     items: [
       {
-        label: "Notifications",
+        labelKey: "nav.notifications",
         href: "/dashboard/notifications",
         icon: Bell,
         badge: "notifications",
         badgeTone: "default",
       },
       {
-        label: "Team",
-        href: "/dashboard/settings#members",
-        icon: Users2,
-      },
-      {
-        label: "Billing",
-        href: "/dashboard/settings#billing",
-        icon: CreditCard,
-      },
-      { label: "Settings", href: "/dashboard/settings", icon: Settings },
-      {
-        label: "What's new",
-        href: "/dashboard/settings#changelog",
-        icon: Sparkles,
-        badge: "v0.1",
-        badgeTone: "default",
-        hideCollapsed: true,
+        labelKey: "nav.settings",
+        href: "/dashboard/settings",
+        icon: Settings,
       },
     ],
   },

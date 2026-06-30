@@ -18,7 +18,7 @@ import { useAuthStore } from "@/features/auth/authStore";
 export default function LoginPage() {
   const router = useRouter();
   const signIn = useAuthStore((s) => s.signIn);
-  const [email, setEmail] = useState("leo@pegasus.io");
+  const [email, setEmail] = useState("leo@pegasus.ac");
   const [password, setPassword] = useState("•••••••••");
 
   const submit = (e: React.FormEvent) => {
@@ -52,7 +52,7 @@ export default function LoginPage() {
                 Welcome back
               </h1>
               <p className="mt-1.5 text-sm text-muted-foreground">
-                Sign in to your Pegasus CRM workspace.
+                Sign in to your Pegasus AC Service workspace.
               </p>
             </div>
 
