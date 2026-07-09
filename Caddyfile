@@ -11,20 +11,22 @@
 #   3. Replace the ":80" site address below with {$APP_DOMAIN}
 #      — Caddy will auto-provision + renew a Let's Encrypt cert.
 #   4. docker compose -f docker-compose.prod.yml restart caddy
+#
+# If you later put Caddy behind another proxy (Cloudflare, an ALB, etc.),
+# add a global block above the site to trust that upstream:
+#   {
+#     servers {
+#       trusted_proxies static private_ranges
+#     }
+#   }
 
 :80 {
 	encode zstd gzip
-
-	# Trust Docker's internal network for real client IP so `remote_host`
-	# in log lines is the browser, not the caddy sidecar.
-	trusted_proxies private_ranges
 
 	# Cache Next.js immutable build assets aggressively.
 	@immutable path /_next/static/*
 	header @immutable Cache-Control "public, max-age=31536000, immutable"
 
-	reverse_proxy app:3000 {
-		header_up X-Real-IP {remote_host}
-		header_up X-Forwarded-For {remote_host}
-	}
+	# reverse_proxy auto-sets X-Forwarded-For / X-Forwarded-Proto.
+	reverse_proxy app:3000
 }
