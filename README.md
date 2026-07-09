@@ -29,6 +29,112 @@ into `/dashboard` — the mock auth gate is signed in by default as
 
 ---
 
+## Backend stack (in-progress)
+
+The frontend is complete; the real backend is being built into this same
+Next.js app (Route Handlers + Server Actions). See
+[BACKEND_PLAN.md](./BACKEND_PLAN.md) for the full architecture doc.
+
+### Local dev with backing services
+
+`docker-compose.yml` runs the backing services (Postgres, Redis, MinIO)
+on your machine; you keep running `next dev` on the host for hot reload.
+
+```bash
+cp .env.example .env.local
+docker compose up -d          # start postgres + redis + minio
+npm run dev                   # http://localhost:3000
+```
+
+Handy URLs while services are up:
+
+| Service          | URL                                |
+|------------------|------------------------------------|
+| App              | http://localhost:3000              |
+| Postgres         | `postgres://pegasus:pegasus_dev@localhost:5432/pegasus` |
+| Redis            | `redis://localhost:6379`           |
+| MinIO S3 API     | http://localhost:9000              |
+| MinIO console    | http://localhost:9001 (login with `MINIO_ROOT_*` from `.env.local`) |
+
+Teardown:
+
+```bash
+docker compose down            # stop, keep data volumes
+docker compose down -v         # stop and wipe all data
+```
+
+### Database (Drizzle + Postgres)
+
+The schema lives at `src/db/schema.ts` and mirrors `features/service/types.ts`
+and `features/platform/types.ts` one-to-one. Migrations are SQL files under
+`src/db/migrations/`.
+
+```bash
+npm run db:generate        # diff schema → generate new migration SQL
+npm run db:migrate         # apply pending migrations to DATABASE_URL
+npm run db:push            # push schema directly (fast dev iteration, no migration file)
+npm run db:seed            # load the mock seed into Postgres (destructive — TRUNCATEs first)
+npm run db:studio          # open Drizzle Studio in your browser
+```
+
+First-time setup on a fresh DB:
+
+```bash
+docker compose up -d
+npm run db:migrate
+npm run db:seed
+```
+
+**Two Postgres roles by design:**
+
+| Role | Used by | Superuser? | Bypasses RLS? |
+|---|---|---|---|
+| `pegasus` | migrations, seed, drizzle-kit | yes | yes |
+| `pegasus_app` | app runtime (Route Handlers) | no | no |
+
+The split is essential for Row-Level Security to actually enforce tenant
+isolation — Postgres superusers bypass all RLS policies unconditionally.
+The non-superuser app role is created on first Postgres boot by
+`docker/postgres-init/01-app-user.sh` and granted table privileges by
+migration `0003_grant_app_user.sql`.
+
+Route handlers must use one of the scoped-DB helpers:
+
+```ts
+import { withTenantContext, withSuperadminContext } from "@/db/tenant-scope";
+
+// Tenant-scoped query — RLS filters by tenant_id automatically.
+const rows = await withTenantContext(session.tenantId, (tx) =>
+  tx.select().from(customers)
+);
+
+// Platform admin query — bypasses tenant filtering.
+const allTenants = await withSuperadminContext((tx) =>
+  tx.select().from(tenants)
+);
+```
+
+Never call plain `db.select()` from a route handler — no scope means no
+rows visible, or (in dev with the wrong URL) tenant isolation silently
+disabled.
+
+### Production stack (self-hosted VM)
+
+`docker-compose.prod.yml` runs the full stack on a single VM: the Next.js
+app, Postgres, Redis, MinIO, and Caddy for automatic HTTPS.
+
+```bash
+# on the VM
+git clone <repo> && cd pegasus-crm
+cp .env.example .env.prod         # fill in real values, including APP_DOMAIN
+docker compose -f docker-compose.prod.yml --env-file .env.prod up -d --build
+```
+
+Point your DNS `A`/`AAAA` record for `${APP_DOMAIN}` at the VM before first
+startup — Caddy will fetch a Let's Encrypt cert automatically.
+
+---
+
 ## Modules
 
 ### Marketing surface
@@ -108,6 +214,8 @@ into `/dashboard` — the mock auth gate is signed in by default as
 | Motion             | **Framer Motion** for the navbar pill, hero entrance, contract progress              |
 | Icons              | **Lucide React**                                                                     |
 | Mock data          | Deterministic PRNG (mulberry32) in `src/features/service/seed.ts`                    |
+| **Backend (WIP)**  | Next.js Route Handlers + Server Actions, **Drizzle ORM**, **PostgreSQL 16**, **Better Auth**, **BullMQ + Redis** for jobs, **MinIO/R2** for object storage, **Caddy** for HTTPS |
+| **Infra (WIP)**    | Docker Compose (`docker-compose.yml` dev services, `docker-compose.prod.yml` full VM stack) |
 
 ---
 
