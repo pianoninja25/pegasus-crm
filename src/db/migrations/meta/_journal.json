@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1783515147975,
+      "tag": "0000_fuzzy_ultimo",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783516339847,
+      "tag": "0001_great_white_tiger",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783516463446,
+      "tag": "0002_rls_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783607247405,
+      "tag": "0003_grant_app_user",
+      "breakpoints": true
+    }
+  ]
+}
