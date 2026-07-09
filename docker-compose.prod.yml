@@ -55,6 +55,9 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      # Explicit target — the Dockerfile has `migrator` as its final stage,
+      # so without `target: runner` Docker would build the migrator here too.
+      target: runner
     restart: unless-stopped
     environment:
       NODE_ENV: production
