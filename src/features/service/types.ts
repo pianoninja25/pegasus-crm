@@ -12,10 +12,26 @@ export type ID = string;
 /* Users + roles                                                              */
 /* -------------------------------------------------------------------------- */
 
-/** Top-level access role for the application. */
-export type UserRole = "administrator" | "manager" | "admin_staff" | "engineer";
+/**
+ * Access role for a user.
+ *
+ * `superadmin` is a **platform-level** role that exists outside any tenant —
+ * it manages tenants and users across the whole platform (see `/admin`).
+ * All other roles are **tenant-scoped**: they operate inside a single
+ * workspace and their `AppUser.tenantId` is required.
+ */
+export type UserRole =
+  | "superadmin"
+  | "administrator"
+  | "manager"
+  | "admin_staff"
+  | "engineer";
 
 export const ROLE_META: Record<UserRole, { label: string; tone: string }> = {
+  superadmin: {
+    label: "Superadmin",
+    tone: "bg-fuchsia-500/20 text-fuchsia-700 dark:bg-fuchsia-500/15 dark:text-fuchsia-300 ring-fuchsia-500/40",
+  },
   administrator: {
     label: "Administrator",
     tone: "bg-violet-500/20 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300 ring-violet-500/40",
@@ -34,12 +50,25 @@ export const ROLE_META: Record<UserRole, { label: string; tone: string }> = {
   },
 };
 
+/** Roles a tenant workspace member can hold (excludes the platform `superadmin`). */
+export const TENANT_ROLES: readonly UserRole[] = [
+  "administrator",
+  "manager",
+  "admin_staff",
+  "engineer",
+] as const;
+
 export interface AppUser {
   id: ID;
   name: string;
   email: string;
   phone: string;
   role: UserRole;
+  /**
+   * Owning tenant. Required for every tenant-scoped role; `undefined` (or
+   * `null`) for a platform `superadmin` since they operate above tenants.
+   */
+  tenantId?: ID;
   /** Job title for the topbar / sidebar. */
   title: string;
   /** Engineers carry an additional skill list + availability. */
@@ -50,6 +79,10 @@ export interface AppUser {
   experienceYears?: number;
   /** Mock avatar tint. */
   hue?: number;
+  /** ISO created timestamp — surfaced in the admin cross-tenant user table. */
+  createdAt?: string;
+  /** Soft-disabled flag toggled from the admin console. */
+  disabled?: boolean;
 }
 
 export interface Company {

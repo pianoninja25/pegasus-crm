@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { ArrowRight, Github, KeyRound, Mail } from "lucide-react";
+import { ArrowRight, Github, KeyRound, Mail, ShieldCheck } from "lucide-react";
 
 import { AuroraBackground } from "@/components/shared/AuroraBackground";
 import { CursorGlow } from "@/components/shared/CursorGlow";
@@ -18,6 +18,7 @@ import { useAuthStore } from "@/features/auth/authStore";
 export default function LoginPage() {
   const router = useRouter();
   const signIn = useAuthStore((s) => s.signIn);
+  const signInAsSuperadmin = useAuthStore((s) => s.signInAsSuperadmin);
   const [email, setEmail] = useState("leo@pegasus.ac");
   const [password, setPassword] = useState("•••••••••");
 
@@ -25,6 +26,11 @@ export default function LoginPage() {
     e.preventDefault();
     signIn();
     router.push("/dashboard");
+  };
+
+  const continueAsSuperadmin = () => {
+    signInAsSuperadmin();
+    router.push("/admin");
   };
 
   return (
@@ -126,6 +132,31 @@ export default function LoginPage() {
               Demo workspace — every credential lands you in as{" "}
               <span className="text-foreground">Leo Santoso</span>.
             </p>
+
+            <div className="mt-5 rounded-lg border border-fuchsia-500/30 bg-fuchsia-500/5 p-3">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex h-6 w-6 items-center justify-center rounded-md bg-fuchsia-500/20 text-fuchsia-600 dark:text-fuchsia-300">
+                  <ShieldCheck className="h-3.5 w-3.5" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[11px] font-semibold text-foreground">
+                    Platform superadmin
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    Manage tenants and cross-tenant users.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-7 gap-1 px-2 text-[11px]"
+                  onClick={continueAsSuperadmin}
+                >
+                  Open <ArrowRight className="h-3 w-3" />
+                </Button>
+              </div>
+            </div>
           </div>
 
           <p className="mt-5 text-center text-xs text-muted-foreground">

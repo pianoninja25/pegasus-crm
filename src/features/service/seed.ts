@@ -288,45 +288,61 @@ export const company: Company = {
   plan: "Growth",
 };
 
+/**
+ * The default tenant these seed users belong to. Kept as a plain string
+ * literal (instead of importing from the platform seed) so this module
+ * remains free of platform-layer imports.
+ */
+const DEFAULT_TENANT_ID = "t_pegasus_ac";
+
 export const users: AppUser[] = [
   {
     id: "u_leo",
+    tenantId: DEFAULT_TENANT_ID,
     name: "Leo Santoso",
     email: "leo@pegasus.ac",
     phone: "+62 811-0001",
     role: "administrator",
     title: "Founder & Admin",
     hue: 215,
+    createdAt: "2023-01-15T02:00:00.000Z",
   },
   {
     id: "u_sarah",
+    tenantId: DEFAULT_TENANT_ID,
     name: "Sarah Chen",
     email: "sarah@pegasus.ac",
     phone: "+62 811-0002",
     role: "manager",
     title: "Operations Manager",
     hue: 262,
+    createdAt: "2023-03-04T02:00:00.000Z",
   },
   {
     id: "u_maya",
+    tenantId: DEFAULT_TENANT_ID,
     name: "Maya Putri",
     email: "maya@pegasus.ac",
     phone: "+62 811-0003",
     role: "admin_staff",
     title: "Admin Officer",
     hue: 12,
+    createdAt: "2023-05-20T02:00:00.000Z",
   },
   {
     id: "u_rina",
+    tenantId: DEFAULT_TENANT_ID,
     name: "Rina Hartono",
     email: "rina@pegasus.ac",
     phone: "+62 811-0004",
     role: "admin_staff",
     title: "Customer Service",
     hue: 320,
+    createdAt: "2023-08-11T02:00:00.000Z",
   },
   {
     id: "u_budi",
+    tenantId: DEFAULT_TENANT_ID,
     name: "Budi Wijaya",
     email: "budi@pegasus.ac",
     phone: "+62 812-1001",
@@ -336,9 +352,11 @@ export const users: AppUser[] = [
     rating: 4.8,
     experienceYears: 12,
     hue: 145,
+    createdAt: "2023-01-30T02:00:00.000Z",
   },
   {
     id: "u_andi",
+    tenantId: DEFAULT_TENANT_ID,
     name: "Andi Susanto",
     email: "andi@pegasus.ac",
     phone: "+62 812-1002",
@@ -348,9 +366,11 @@ export const users: AppUser[] = [
     rating: 4.6,
     experienceYears: 8,
     hue: 200,
+    createdAt: "2023-04-12T02:00:00.000Z",
   },
   {
     id: "u_eko",
+    tenantId: DEFAULT_TENANT_ID,
     name: "Eko Pratama",
     email: "eko@pegasus.ac",
     phone: "+62 812-1003",
@@ -360,9 +380,11 @@ export const users: AppUser[] = [
     rating: 4.7,
     experienceYears: 6,
     hue: 290,
+    createdAt: "2023-06-01T02:00:00.000Z",
   },
   {
     id: "u_hendra",
+    tenantId: DEFAULT_TENANT_ID,
     name: "Hendra Nugroho",
     email: "hendra@pegasus.ac",
     phone: "+62 812-1004",
@@ -372,9 +394,11 @@ export const users: AppUser[] = [
     rating: 4.4,
     experienceYears: 4,
     hue: 30,
+    createdAt: "2023-09-18T02:00:00.000Z",
   },
   {
     id: "u_dimas",
+    tenantId: DEFAULT_TENANT_ID,
     name: "Dimas Setiawan",
     email: "dimas@pegasus.ac",
     phone: "+62 812-1005",
@@ -384,6 +408,7 @@ export const users: AppUser[] = [
     rating: 4.5,
     experienceYears: 2,
     hue: 240,
+    createdAt: "2024-02-05T02:00:00.000Z",
   },
 ];
 

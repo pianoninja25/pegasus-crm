@@ -207,6 +207,31 @@ export function formatPercent(fraction: number, digits = 0): string {
 }
 
 /**
+ * Byte formatter using the binary (IEC) scale — "1.4 GB" style. Uses base
+ * 1024 to match how disk usage is universally reported in dashboards and
+ * cloud-provider consoles.
+ *
+ * @example
+ *   formatBytes(1_536_000)          // "1.5 MB"
+ *   formatBytes(0)                  // "0 B"
+ *   formatBytes(1_099_511_627_776)  // "1 TB"
+ */
+export function formatBytes(bytes: number, digits = 1): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB", "PB"] as const;
+  const idx = Math.min(
+    units.length - 1,
+    Math.floor(Math.log(bytes) / Math.log(1024)),
+  );
+  const value = bytes / 1024 ** idx;
+  const rounded =
+    idx === 0
+      ? Math.round(value).toString()
+      : value.toFixed(value >= 100 ? 0 : digits);
+  return `${rounded} ${units[idx]}`;
+}
+
+/**
  * Inline style for engineer avatars — keeps the same coloured-disc look
  * everywhere (sidebar, lists, detail header rails, schedule rows).
  *

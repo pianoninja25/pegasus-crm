@@ -9,6 +9,7 @@ import {
   LogOut,
   Palette,
   Settings,
+  ShieldCheck,
   Users2,
   UserRound,
 } from "lucide-react";
@@ -24,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuthStore } from "@/features/auth/authStore";
+import { SUPERADMIN_USER } from "@/features/platform/seed";
 import { initials } from "@/lib/format";
 import { users } from "@/features/service/seed";
 import { ROLE_META } from "@/features/service/types";
@@ -34,8 +36,11 @@ export function UserMenu() {
   const workspace = useAuthStore((s) => s.workspace);
   const signOut = useAuthStore((s) => s.signOut);
   const signInAs = useAuthStore((s) => s.signInAs);
+  const signInAsSuperadmin = useAuthStore((s) => s.signInAsSuperadmin);
 
   if (!user) return null;
+
+  const isSuperadmin = user.role === "superadmin";
 
   return (
     <DropdownMenu>
@@ -72,15 +77,54 @@ export function UserMenu() {
           </div>
         </div>
         <DropdownMenuSeparator />
-        {workspace && (
+        {workspace ? (
           <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
             {workspace.name} · {workspace.plan}
           </DropdownMenuLabel>
+        ) : (
+          <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-fuchsia-600 dark:text-fuchsia-400">
+            Platform superadmin
+          </DropdownMenuLabel>
+        )}
+        {isSuperadmin && (
+          <DropdownMenuItem asChild>
+            <Link
+              href="/admin"
+              className="flex items-center gap-2 text-xs text-fuchsia-700 focus:text-fuchsia-700 dark:text-fuchsia-300 dark:focus:text-fuchsia-300"
+            >
+              <ShieldCheck className="h-3.5 w-3.5" /> Admin console
+            </Link>
+          </DropdownMenuItem>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuLabel className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
           <Users2 className="h-3 w-3" /> Switch role (demo)
         </DropdownMenuLabel>
+        <DropdownMenuItem
+          className="flex items-center gap-2 text-xs"
+          onSelect={() => {
+            signInAsSuperadmin();
+            router.push("/admin");
+          }}
+        >
+          <Avatar className="h-6 w-6">
+            <AvatarFallback
+              className="text-[9px] font-semibold text-white"
+              style={{
+                background: "linear-gradient(135deg,#d946ef,#7c3aed)",
+              }}
+            >
+              {initials(SUPERADMIN_USER.name)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-foreground">{SUPERADMIN_USER.name}</p>
+            <p className="truncate text-[10px] text-fuchsia-600 dark:text-fuchsia-400">
+              Superadmin (platform)
+            </p>
+          </div>
+          {isSuperadmin && <Check className="h-3.5 w-3.5 text-primary" />}
+        </DropdownMenuItem>
         {users
           .filter((u) =>
             ["administrator", "manager", "admin_staff", "engineer"].includes(

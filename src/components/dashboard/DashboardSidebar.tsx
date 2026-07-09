@@ -90,7 +90,7 @@ export function DashboardSidebar({ variant = "desktop" }: DashboardSidebarProps)
   };
 
   const isAllowed = (item: SidebarItem): boolean =>
-    !item.roles || item.roles.includes(role);
+    role === "superadmin" || !item.roles || item.roles.includes(role);
 
   const handleNavClick = () => {
     if (variant === "mobile") closeMobile(false);
