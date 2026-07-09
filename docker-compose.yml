@@ -1,0 +1,92 @@
+# Local development backing services for Pegasus CRM.
+#
+# Brings up Postgres + Redis + MinIO on your machine. You then run the
+# Next.js app on the host with `npm run dev` for hot reload.
+#
+# Usage:
+#   docker compose up -d          # start services in the background
+#   docker compose logs -f        # tail logs
+#   docker compose down           # stop (keeps volumes)
+#   docker compose down -v        # stop and wipe data
+#
+# For a production-like all-in-Docker stack (app + Caddy + services), use
+# docker-compose.prod.yml instead.
+
+name: pegasus-crm
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-pegasus}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-pegasus_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-pegasus}
+      # Consumed by docker/postgres-init/01-app-user.sh on first boot.
+      PEGASUS_APP_USER: ${PEGASUS_APP_USER:-pegasus_app}
+      PEGASUS_APP_PASSWORD: ${PEGASUS_APP_PASSWORD:-pegasus_app_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pegasus} -d ${POSTGRES_DB:-pegasus}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # MinIO is an S3-compatible object store used in local dev.
+  # In production we can either keep MinIO on the VM (see docker-compose.prod.yml)
+  # or point the app at Cloudflare R2 by changing S3_* env vars.
+  minio:
+    image: minio/minio:latest
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio_admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio_admin_dev}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # One-shot job: create the app bucket the first time MinIO comes up.
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${MINIO_ROOT_USER:-minio_admin} ${MINIO_ROOT_PASSWORD:-minio_admin_dev} &&
+      mc mb --ignore-existing local/${S3_BUCKET:-pegasus} &&
+      mc anonymous set download local/${S3_BUCKET:-pegasus}/public &&
+      echo 'MinIO bucket ready.'
+      "
+    restart: "no"
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:

@@ -1,0 +1,23 @@
+# Caddy config for Pegasus CRM production.
+#
+# Terminates HTTPS at the edge (auto-provisions certs from Let's Encrypt),
+# reverse-proxies to the Next.js app container on port 3000.
+#
+# Requires ${APP_DOMAIN} to be set in the compose environment and the DNS
+# A/AAAA record to point at this VM before first startup.
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	# Trust Docker's internal network for real client IP.
+	trusted_proxies private_ranges
+
+	# Cache Next.js immutable build assets aggressively.
+	@immutable path /_next/static/*
+	header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+	reverse_proxy app:3000 {
+		header_up X-Real-IP {remote_host}
+		header_up X-Forwarded-For {remote_host}
+	}
+}
