@@ -1,15 +1,22 @@
 # Caddy config for Pegasus CRM production.
 #
-# Terminates HTTPS at the edge (auto-provisions certs from Let's Encrypt),
-# reverse-proxies to the Next.js app container on port 3000.
+# Default: HTTP-only on port 80.
+#   Works for IP-only deployments (Let's Encrypt cannot issue certs
+#   for raw IP addresses) and also fine for local prod-mode testing.
 #
-# Requires ${APP_DOMAIN} to be set in the compose environment and the DNS
-# A/AAAA record to point at this VM before first startup.
+# To enable HTTPS once you have a domain:
+#   1. Point an A record at this VM's public IP.
+#   2. Set APP_DOMAIN=your.domain.com in .env.prod
+#      (the app service also reads it for BETTER_AUTH_URL etc).
+#   3. Replace the ":80" site address below with {$APP_DOMAIN}
+#      — Caddy will auto-provision + renew a Let's Encrypt cert.
+#   4. docker compose -f docker-compose.prod.yml restart caddy
 
-{$APP_DOMAIN} {
+:80 {
 	encode zstd gzip
 
-	# Trust Docker's internal network for real client IP.
+	# Trust Docker's internal network for real client IP so `remote_host`
+	# in log lines is the browser, not the caddy sidecar.
 	trusted_proxies private_ranges
 
 	# Cache Next.js immutable build assets aggressively.
